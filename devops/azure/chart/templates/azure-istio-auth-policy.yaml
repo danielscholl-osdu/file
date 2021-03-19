@@ -30,9 +30,9 @@ spec:
         - operation:
             notPaths: ["/","*/index.html",
                        "*/readiness_check",
-                       "*/v2/api-docs",
+                       "*/api-docs",
                        "*/swagger","*/swagger-resources","*/swagger-ui.html",
                        "*/actuator/health",
                        "*/configuration/ui","*/configuration/security",
-                       "/api/file/v2/swagger-resources/*",
-                       "/api/file/v2/webjars/*"]
+                       "/api/file/swagger-resources/*",
+                       "/api/file/webjars/*"]
