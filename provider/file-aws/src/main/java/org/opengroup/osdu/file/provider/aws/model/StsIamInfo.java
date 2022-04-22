@@ -12,44 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.opengroup.osdu.file.provider.aws.di.model;
+package org.opengroup.osdu.file.provider.aws.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.opengroup.osdu.file.provider.aws.auth.TemporaryCredentials;
 
-import java.net.URI;
-import java.time.Instant;
-import java.util.Date;
-
-@JsonIgnoreProperties(ignoreUnknown = true)
 @Data
+@Builder
 @NoArgsConstructor
-public class FileDeliveryItemAWSImpl implements FileDeliveryItem {
+@AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class StsIamInfo {
 
-    @JsonProperty("signedUrl")
-    URI signedUrl;
-
-    @JsonProperty("signedUrlExpiration")
-    Date signedUrlExpiration;
-
-    @JsonProperty("unsignedUrl")
-    String unsignedUrl;
-
-    @JsonProperty("createdAt")
-    Instant createdAt;
-
-    @JsonProperty("fileName")
-    String fileName;
-
-    @JsonProperty("connectionString")
-    String connectionString;
-
-    @JsonProperty("credentials")
-    private TemporaryCredentials credentials;
-
-    @JsonProperty("region")
-    private String region;
+    @JsonProperty("arn")
+    private String arn;
 }

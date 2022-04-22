@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.opengroup.osdu.file.provider.aws.model;
+package org.opengroup.osdu.file.provider.aws.auth;
 
+import com.amazonaws.auth.AWSSessionCredentials;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,13 +26,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class TemporaryCredentials {
+public class TemporaryCredentials implements AWSSessionCredentials {
 
-    private static String CONN_STRING_FORMAT =
-            "AccessKeyId=%s;SecretAccessKey=%s;SessionToken=%s;Expiration=%s";
+    private static String CONN_STRING_FORMAT = "AccessKeyId=%s;SecretAccessKey=%s;SessionToken=%s;Expiration=%s";
 
     @JsonProperty("accessKeyId")
     private String accessKeyId;
@@ -45,10 +46,23 @@ public class TemporaryCredentials {
     private Date expiration;
 
     public String toConnectionString() {
-        if (accessKeyId == null || accessKeyId == "") {
+        if (accessKeyId == null || accessKeyId.equals("")) {
             return "";
         }
+
         String expirationString = DateTimeFormatter.ISO_INSTANT.format(expiration.toInstant());
         return String.format(CONN_STRING_FORMAT, accessKeyId, secretAccessKey, sessionToken, expirationString);
+    }
+
+    @Override
+    @JsonIgnore
+    public String getAWSAccessKeyId() {
+        return accessKeyId;
+    }
+
+    @Override
+    @JsonIgnore
+    public String getAWSSecretKey() {
+        return secretAccessKey;
     }
 }
