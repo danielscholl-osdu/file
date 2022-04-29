@@ -27,7 +27,6 @@ public class TemporaryCredentialsProvider implements AWSSessionCredentialsProvid
 
     @Override
     public void refresh() {
-        // TODO Auto-generated method stub
     }
 
     @Override
