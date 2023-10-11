@@ -31,7 +31,7 @@ import java.util.Date;
 @AllArgsConstructor
 public class TemporaryCredentials implements AWSSessionCredentials {
 
-    private static String CONN_STRING_FORMAT = "AccessKeyId=%s;SecretAccessKey=%s;SessionToken=%s;Expiration=%s";
+    private static String connStringFormat = "AccessKeyId=%s;SecretAccessKey=%s;SessionToken=%s;Expiration=%s";
 
     @JsonProperty("accessKeyId")
     private String accessKeyId;
@@ -51,7 +51,7 @@ public class TemporaryCredentials implements AWSSessionCredentials {
         }
 
         String expirationString = DateTimeFormatter.ISO_INSTANT.format(expiration.toInstant());
-        return String.format(CONN_STRING_FORMAT, accessKeyId, secretAccessKey, sessionToken, expirationString);
+        return String.format(connStringFormat, accessKeyId, secretAccessKey, sessionToken, expirationString);
     }
 
     @Override
