@@ -29,6 +29,7 @@ public class TemporaryCredentialsProvider implements AWSSessionCredentialsProvid
 
     @Override
     public void refresh() {
+        //Do nothing here, Overriding.
     }
 
     @Override
