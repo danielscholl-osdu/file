@@ -468,7 +468,7 @@
     <profile>
       <id>gc</id>
       <modules>
-        <module>provider/file-gc-datastore</module>
+        <module>provider/file-gc</module>
       </modules>
     </profile>
   </profiles>
