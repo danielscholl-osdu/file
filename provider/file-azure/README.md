@@ -121,6 +121,12 @@ az keyvault secret show --vault-name $KEY_VAULT_NAME --name $KEY_VAULT_SECRET_NA
 | `TIME_ZONE` | `UTC+0` | Time zone required for tests to pass  | yes | - |
 | `STAGING_CONTAINER_NAME` | `file_staging_area` | Name of staging container for file service | no | created by Terraform |
 
+Following variables are optional and not required if using `TESTER_SERVICEPRINCIPAL_SECRET` and `NO_DATA_ACCESS_TESTER_SERVICEPRINCIPAL_SECRET` which is current usage for Azure OSDU.
+
+| name | value | description | sensitive? | source |
+| ---  | ---   | ---         | ---        | ---    |
+| `INTEGRATION_TESTER_ACCESS_TOKEN` | `********` | Bearer token for `$INTEGRATION_TESTER` | yes | -- |
+| `NO_DATA_ACCESS_TESTER_ACCESS_TOKEN` | `********` | Bearer token for `$NO_DATA_ACCESS_TESTER` | yes | -- |
 
 
 ## Running Locally

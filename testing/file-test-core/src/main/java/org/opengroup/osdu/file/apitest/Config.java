@@ -29,7 +29,8 @@ public class Config {
   private static final String TARGET_AUDIENCE = "";
   private static final String DATA_PARTITION_ID = "";
   private static final String USER_ID = "";
-
+  private static final String INTEGRATION_TESTER_ACCESS_TOKEN = "";
+  private static final String NO_DATA_ACCESS_TESTER_ACCESS_TOKEN = "";
 
   //Delivery API Properties
   private static final String DEFAULT_SEARCH_HOST = "";
@@ -81,6 +82,13 @@ public class Config {
 
   public static String getNoAccessTester() {
     return getEnvironmentVariableOrDefaultValue("NO_DATA_ACCESS_TESTER", NO_DATA_ACCESS_TESTER);
+  }
+
+  public static String getIntegrationTesterAccessToken() {
+    return getEnvironmentVariableOrDefaultValue("INTEGRATION_TESTER_ACCESS_TOKEN", INTEGRATION_TESTER_ACCESS_TOKEN);
+  }
+  public static String getNoAccessTesterAccessToken() {
+    return getEnvironmentVariableOrDefaultValue("NO_DATA_ACCESS_TESTER_ACCESS_TOKEN", NO_DATA_ACCESS_TESTER_ACCESS_TOKEN);
   }
 
   public static String getDataPartitionId() {
