@@ -43,6 +43,7 @@ public class TestFile extends File {
   private static final String retrievalInstructionsApi = "/files/retrievalInstructions";
   private static final String copyDmsApi = "/files/copy";
   private static final String revokeURLApi = "/files/revokeURL";
+  private static final String invalidDownloadURLApi = "/files//downloadURL";
 
   private static String storageAccountName = System.getProperty("AZURE_STORAGE_ACCOUNT", System.getenv("AZURE_STORAGE_ACCOUNT"));
   private static String resourceGroupName = System.getProperty("RESOURCE_GROUP_NAME", System.getenv("RESOURCE_GROUP_NAME"));
@@ -335,6 +336,18 @@ public class TestFile extends File {
         storageInstructions.getStorageLocation().get("signedUrl").toString(),
         "GET", new HashMap<>(), null);
     assertEquals(HttpStatus.SC_FORBIDDEN, fileUploadResponse1.getStatus());
+  }
+
+  @Test
+  public void getDownloadURL_shouldReturnBadRequest_whenDoubleSlashesInURL() throws Exception {
+    ClientResponse response = client.send(
+        invalidDownloadURLApi,
+        "GET",
+        getCommonHeader(),
+        null
+    );
+    assertNotNull(response);
+    assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
   }
 
   @AfterAll
