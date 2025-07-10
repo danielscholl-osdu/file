@@ -16,17 +16,15 @@
 
 package org.opengroup.osdu.file.provider.aws.helper;
 import java.util.UUID;
-import com.amazonaws.auth.policy.Condition;
-import com.amazonaws.auth.policy.Policy;
-import com.amazonaws.auth.policy.Resource;
-import com.amazonaws.auth.policy.Statement;
-import com.amazonaws.auth.policy.actions.S3Actions;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
-import com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceException;
-import com.amazonaws.services.securitytoken.model.AssumeRoleRequest;
-import com.amazonaws.services.securitytoken.model.AssumeRoleResult;
-import com.amazonaws.services.securitytoken.model.Credentials;
-import org.opengroup.osdu.core.aws.sts.STSConfig;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import software.amazon.awssdk.services.sts.model.AssumeRoleResponse;
+import software.amazon.awssdk.services.sts.model.Credentials;
+import software.amazon.awssdk.services.sts.model.StsException;
+import software.amazon.awssdk.policybuilder.iam.IamPolicy;
+import software.amazon.awssdk.policybuilder.iam.IamStatement;
+import software.amazon.awssdk.policybuilder.iam.IamEffect;
+import org.opengroup.osdu.core.aws.v2.sts.STSConfig;
 import org.opengroup.osdu.file.exception.OsduBadRequestException;
 import org.opengroup.osdu.file.provider.aws.auth.TemporaryCredentials;
 import org.opengroup.osdu.file.provider.aws.config.ProviderConfigurationBag;
@@ -40,7 +38,7 @@ import java.util.Date;
 @Component
 public class StsCredentialsHelper {
 
-    private final AWSSecurityTokenService securityTokenService;
+    private final StsClient securityTokenService;
 
     @Autowired
     public StsCredentialsHelper(ProviderConfigurationBag providerConfigurationBag) {
@@ -49,110 +47,148 @@ public class StsCredentialsHelper {
     }
 
     public TemporaryCredentials getUploadCredentials(S3Location fileLocation, String roleArn, Date expiration) {
-        Policy policy = createUploadPolicy(fileLocation);
+        IamPolicy policy = createUploadPolicy(fileLocation);
 
         return getCredentials(policy, roleArn, expiration);
     }
 
     public TemporaryCredentials getRetrievalCredentials(S3Location fileLocation, String roleArn, Date expiration) {
-        Policy policy = createRetrievalPolicy(fileLocation);
+        IamPolicy policy = createRetrievalPolicy(fileLocation);
 
         return getCredentials(policy, roleArn, expiration);
     }
 
-    public TemporaryCredentials getCredentials(Policy policy, String roleArn, Date expiration) {
+    public TemporaryCredentials getCredentials(IamPolicy policy, String roleArn, Date expiration) {
         Instant now = Instant.now();
         UUID uuid = UUID.randomUUID();
         String roleSessionName = uuid.toString();
         long duration = Math.round(((expiration.getTime() - now.toEpochMilli()) / 1_000.0) / 60.0) * 60;
 
         try {
-            AssumeRoleRequest roleRequest = new AssumeRoleRequest()
-                .withRoleArn(roleArn)
-                .withRoleSessionName(roleSessionName)
-                .withDurationSeconds((int) duration)
-                .withPolicy(policy.toJson());
-
-            AssumeRoleResult response = securityTokenService.assumeRole(roleRequest);
-            Credentials sessionCredentials = response.getCredentials();
-
-            return TemporaryCredentials.builder()
-                .accessKeyId(sessionCredentials.getAccessKeyId())
-                .expiration(sessionCredentials.getExpiration())
-                .secretAccessKey(sessionCredentials.getSecretAccessKey())
-                .sessionToken(sessionCredentials.getSessionToken())
+            AssumeRoleRequest roleRequest = AssumeRoleRequest.builder()
+                .roleArn(roleArn)
+                .roleSessionName(roleSessionName)
+                .durationSeconds((int) duration)
+                .policy(policy.toJson())
                 .build();
 
-        } catch (AWSSecurityTokenServiceException e) {
+            AssumeRoleResponse response = securityTokenService.assumeRole(roleRequest);
+            Credentials sessionCredentials = response.credentials();
+
+            return TemporaryCredentials.builder()
+                .accessKeyId(sessionCredentials.accessKeyId())
+                .expiration(Date.from(sessionCredentials.expiration()))
+                .secretAccessKey(sessionCredentials.secretAccessKey())
+                .sessionToken(sessionCredentials.sessionToken())
+                .build();
+
+        } catch (StsException e) {
             throw new OsduBadRequestException("Failed to assume role: " + e.getMessage(), e);
         }
     }
 
-    private Policy createUploadPolicy(S3Location fileLocation) {
+    private IamPolicy createUploadPolicy(S3Location fileLocation) {
         String fileLocationKeyWithoutTrailingSlash = fileLocation.getKey().replaceFirst("/$", "");
-        return (new Policy()).withStatements(
-            allowUserToSeeBucketList(),
-            allowRootAndLocationListing(fileLocation, fileLocationKeyWithoutTrailingSlash),
-            allowSubLocationListing(fileLocation, fileLocationKeyWithoutTrailingSlash),
-            allowSubLocationGet(fileLocation, fileLocationKeyWithoutTrailingSlash),
-            allowLocationGet(fileLocation, fileLocationKeyWithoutTrailingSlash),
-            allowLocationPut(fileLocation, fileLocationKeyWithoutTrailingSlash),
-            allowSubLocationPut(fileLocation, fileLocationKeyWithoutTrailingSlash)
-        );
+
+        return IamPolicy.builder()
+            .addStatement(allowUserToSeeBucketList())
+            .addStatement(allowRootAndLocationListing(fileLocation, fileLocationKeyWithoutTrailingSlash))
+            .addStatement(allowSubLocationListing(fileLocation, fileLocationKeyWithoutTrailingSlash))
+            .addStatement(allowSubLocationGet(fileLocation, fileLocationKeyWithoutTrailingSlash))
+            .addStatement(allowLocationGet(fileLocation, fileLocationKeyWithoutTrailingSlash))
+            .addStatement(allowLocationPut(fileLocation, fileLocationKeyWithoutTrailingSlash))
+            .addStatement(allowSubLocationPut(fileLocation, fileLocationKeyWithoutTrailingSlash))
+            .build();
     }
 
-    private Policy createRetrievalPolicy(S3Location fileLocation) {
+    private IamPolicy createRetrievalPolicy(S3Location fileLocation) {
         String fileLocationKeyWithoutTrailingSlash = fileLocation.getKey().replaceFirst("/$", "");
-        return new Policy().withStatements(
-            allowUserToSeeBucketList(),
-            allowRootAndLocationListing(fileLocation, fileLocationKeyWithoutTrailingSlash),
-            allowSubLocationListing(fileLocation, fileLocationKeyWithoutTrailingSlash),
-            allowSubLocationGet(fileLocation, fileLocationKeyWithoutTrailingSlash),
-            allowLocationGet(fileLocation, fileLocationKeyWithoutTrailingSlash)
-        );
+
+        return IamPolicy.builder()
+            .addStatement(allowUserToSeeBucketList())
+            .addStatement(allowRootAndLocationListing(fileLocation, fileLocationKeyWithoutTrailingSlash))
+            .addStatement(allowSubLocationListing(fileLocation, fileLocationKeyWithoutTrailingSlash))
+            .addStatement(allowSubLocationGet(fileLocation, fileLocationKeyWithoutTrailingSlash))
+            .addStatement(allowLocationGet(fileLocation, fileLocationKeyWithoutTrailingSlash))
+            .build();
+
     }
 
-    private Statement allowUserToSeeBucketList() {
-        return (new Statement(Statement.Effect.Allow))
-            .withActions(S3Actions.ListBuckets, S3Actions.GetBucketLocation)
-            .withResources(new Resource("arn:aws:s3:::*"));
+    private IamStatement allowUserToSeeBucketList() {
+        return IamStatement.builder()
+            .effect(IamEffect.ALLOW)
+            .addAction("s3:ListAllMyBuckets")
+            .addAction("s3:GetBucketLocation")
+            .addResource("arn:aws:s3:::*")
+            .build();
     }
 
-    private Statement allowRootAndLocationListing(S3Location fileLocation, String fileLocationKeyWithoutTrailingSlash) {
-        return (new Statement(Statement.Effect.Allow))
-            .withActions(S3Actions.ListBuckets, S3Actions.ListObjects, S3Actions.ListObjectVersions)
-            .withResources(new Resource(String.format("arn:aws:s3:::%s", fileLocation.getBucket())))
-            .withConditions(new Condition().withType("StringEquals").withConditionKey("s3:prefix").withValues("", fileLocationKeyWithoutTrailingSlash));
+    private IamStatement allowRootAndLocationListing(S3Location fileLocation, String fileLocationKeyWithoutTrailingSlash) {
+        return IamStatement.builder()
+            .effect(IamEffect.ALLOW)
+            .addAction("s3:ListBucket")
+            .addAction("s3:ListBucketVersions")
+            .addResource(String.format("arn:aws:s3:::%s", fileLocation.getBucket()))
+            .addCondition(condition -> condition
+                .operator("StringEquals")
+                .key("s3:prefix")
+                .value("")
+                .value(fileLocationKeyWithoutTrailingSlash))
+            .build();
     }
 
-    private Statement allowSubLocationListing(S3Location fileLocation, String fileLocationKeyWithoutTrailingSlash) {
-        return (new Statement(Statement.Effect.Allow))
-            .withActions(S3Actions.ListBuckets, S3Actions.ListObjects, S3Actions.ListObjectVersions)
-            .withResources(new Resource(String.format("arn:aws:s3:::%s", fileLocation.getBucket())))
-            .withConditions(new Condition().withType("StringLike").withConditionKey("s3:prefix").withValues(String.format("%s/*", fileLocationKeyWithoutTrailingSlash)));
+    private IamStatement allowSubLocationListing(S3Location fileLocation, String fileLocationKeyWithoutTrailingSlash) {
+        return IamStatement.builder()
+            .effect(IamEffect.ALLOW)
+            .addAction("s3:ListBucket")
+            .addAction("s3:ListBucketVersions")
+            .addResource(String.format("arn:aws:s3:::%s", fileLocation.getBucket()))
+            .addCondition(condition -> condition
+                .operator("StringLike")
+                .key("s3:prefix")
+                .value(String.format("%s/*", fileLocationKeyWithoutTrailingSlash)))
+            .build();
     }
 
-    private Statement allowLocationGet(S3Location fileLocation, String fileLocationKeyWithoutTrailingSlash) {
-        return (new Statement(Statement.Effect.Allow))
-            .withActions(S3Actions.GetObject, S3Actions.GetObjectVersion, S3Actions.GetObjectAcl)
-            .withResources(new Resource(String.format("arn:aws:s3:::%s/%s", fileLocation.getBucket(), fileLocationKeyWithoutTrailingSlash)));
+    private IamStatement allowLocationGet(S3Location fileLocation, String fileLocationKeyWithoutTrailingSlash) {
+        return IamStatement.builder()
+            .effect(IamEffect.ALLOW)
+            .addAction("s3:GetObject")
+            .addAction("s3:GetObjectVersion")
+            .addAction("s3:GetObjectAcl")
+            .addResource(String.format("arn:aws:s3:::%s/%s", fileLocation.getBucket(), fileLocationKeyWithoutTrailingSlash))
+            .build();
     }
 
-    private Statement allowSubLocationGet(S3Location fileLocation, String fileLocationKeyWithoutTrailingSlash) {
-        return (new Statement(Statement.Effect.Allow))
-            .withActions(S3Actions.GetObject, S3Actions.GetObjectVersion, S3Actions.GetObjectAcl)
-            .withResources(new Resource(String.format("arn:aws:s3:::%s/%s/*", fileLocation.getBucket(), fileLocationKeyWithoutTrailingSlash)));
+    private IamStatement allowSubLocationGet(S3Location fileLocation, String fileLocationKeyWithoutTrailingSlash) {
+        return IamStatement.builder()
+            .effect(IamEffect.ALLOW)
+            .addAction("s3:GetObject")
+            .addAction("s3:GetObjectVersion")
+            .addAction("s3:GetObjectAcl")
+            .addResource(String.format("arn:aws:s3:::%s/%s/*", fileLocation.getBucket(), fileLocationKeyWithoutTrailingSlash))
+            .build();
     }
 
-    private Statement allowLocationPut(S3Location fileLocation, String fileLocationKeyWithoutTrailingSlash) {
-        return (new Statement(Statement.Effect.Allow))
-            .withActions(S3Actions.PutObject, S3Actions.ListBucketMultipartUploads, S3Actions.ListMultipartUploadParts, S3Actions.AbortMultipartUpload)
-            .withResources(new Resource(String.format("arn:aws:s3:::%s/%s", fileLocation.getBucket(), fileLocationKeyWithoutTrailingSlash)));
+    private IamStatement allowLocationPut(S3Location fileLocation, String fileLocationKeyWithoutTrailingSlash) {
+        return IamStatement.builder()
+            .effect(IamEffect.ALLOW)
+            .addAction("s3:PutObject")
+            .addAction("s3:ListBucketMultipartUploads")
+            .addAction("s3:ListMultipartUploadParts")
+            .addAction("s3:AbortMultipartUpload")
+            .addResource(String.format("arn:aws:s3:::%s/%s", fileLocation.getBucket(), fileLocationKeyWithoutTrailingSlash))
+            .build();
     }
 
-    private Statement allowSubLocationPut(S3Location fileLocation, String fileLocationKeyWithoutTrailingSlash) {
-        return (new Statement(Statement.Effect.Allow))
-            .withActions(S3Actions.PutObject, S3Actions.ListBucketMultipartUploads, S3Actions.ListMultipartUploadParts, S3Actions.AbortMultipartUpload)
-            .withResources(new Resource(String.format("arn:aws:s3:::%s/%s/*", fileLocation.getBucket(), fileLocationKeyWithoutTrailingSlash)));
+    private IamStatement allowSubLocationPut(S3Location fileLocation, String fileLocationKeyWithoutTrailingSlash) {
+        return IamStatement.builder()
+            .effect(IamEffect.ALLOW)
+            .addAction("s3:PutObject")
+            .addAction("s3:ListBucketMultipartUploads")
+            .addAction("s3:ListMultipartUploadParts")
+            .addAction("s3:AbortMultipartUpload")
+            .addResource(String.format("arn:aws:s3:::%s/%s/*", fileLocation.getBucket(), fileLocationKeyWithoutTrailingSlash))
+            .build();
     }
 }

@@ -16,7 +16,8 @@
 
 package org.opengroup.osdu.file.impl;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -26,14 +27,14 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.file.model.FileRetrievalData;
@@ -46,8 +47,8 @@ import org.opengroup.osdu.file.util.ExpiryTimeUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@RunWith(MockitoJUnitRunner.class)
-public class FileCollectionStorageServiceImplTest {
+@ExtendWith(MockitoExtension.class)
+class FileCollectionStorageServiceImplTest {
 
     private final String datasetID = "datasetID";
     private final String partitionID = "partitionID";
@@ -70,18 +71,18 @@ public class FileCollectionStorageServiceImplTest {
 
     MockedStatic<S3Helper> mockS3Helper;
 
-    @Before
-	public void setUp() throws Exception {
+    @BeforeEach
+	void setUp() {
         mockS3Helper = mockStatic(S3Helper.class);
 	}
 
-	@After
-	public void after() {
+	@AfterEach
+	void after() {
         mockS3Helper.close();
 	}	
 
     @Test
-    public void testCreateStorageInstructions() {
+    void testCreateStorageInstructions() {
 
         when(fileLocationProvider.getFileCollectionUploadLocation(anyString(), anyString())).thenReturn(new ProviderLocation());
 
@@ -90,19 +91,20 @@ public class FileCollectionStorageServiceImplTest {
         assertNotNull(service.createStorageInstructions(datasetID, partitionID));
     }
 
-    @Test (expected=AppException.class)
-    public void testCreateRetrievalInstructions_badRequest() {
+    @Test
+    void testCreateRetrievalInstructions_badRequest() {
 
         List<FileRetrievalData> fileRetrievalDatas = new ArrayList<FileRetrievalData>();
         FileRetrievalData fileRetrievalData = mock(FileRetrievalData.class);
         fileRetrievalDatas.add(fileRetrievalData);
 
-
-        service.createRetrievalInstructions(fileRetrievalDatas);
+        assertThrows(AppException.class, () -> {
+            service.createRetrievalInstructions(fileRetrievalDatas);
+        });
     }
 
     @Test
-    public void testCreateRetrievalInstructions() {
+    void testCreateRetrievalInstructions() {
 
         ExpiryTimeUtil realExpiryTimeUtil = new ExpiryTimeUtil();
         SignedUrlParameters signedUrlParameters = new SignedUrlParameters();

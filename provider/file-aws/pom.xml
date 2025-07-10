@@ -34,7 +34,8 @@
 
     <properties>
         <aws.version>1.12.261</aws.version>
-        <os-core-lib-aws.version>4.0.0</os-core-lib-aws.version>
+        <awsv2.version>2.30.32</awsv2.version>
+        <os-core-lib-aws.version>6.0.0</os-core-lib-aws.version>
         <spring-boot.version>3.3.11</spring-boot.version>
         <deployment.environment>dev</deployment.environment>
         <spring-boot.repackage.skip>true</spring-boot.repackage.skip>
@@ -141,6 +142,11 @@
             <version>${os-core-lib-aws.version}</version>
         </dependency>
         <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>iam-policy-builder</artifactId>
+            <version>${awsv2.version}</version>
+        </dependency>
+        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.14.0</version>
@@ -157,15 +163,19 @@
             <version>4.1.119.Final</version>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-inline</artifactId>
-            <version>3.12.4</version>
+            <version>5.2.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

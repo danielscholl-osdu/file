@@ -16,12 +16,13 @@
 
 package org.opengroup.osdu.file.provider.aws.impl;
 
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
-import org.opengroup.osdu.core.aws.dynamodb.DynamoDBQueryHelperFactory;
-import org.opengroup.osdu.core.aws.dynamodb.DynamoDBQueryHelperV2;
-import org.opengroup.osdu.core.aws.dynamodb.QueryPageResult;
+import org.opengroup.osdu.core.aws.v2.dynamodb.interfaces.IDynamoDBQueryHelperFactory;
+import org.opengroup.osdu.core.aws.v2.dynamodb.DynamoDBQueryHelper;
+import org.opengroup.osdu.core.aws.v2.dynamodb.model.QueryPageResult;
+import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
 import org.opengroup.osdu.core.common.model.file.FileListRequest;
 import org.opengroup.osdu.core.common.model.file.FileListResponse;
 import org.opengroup.osdu.core.common.model.file.FileLocation;
@@ -43,6 +44,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static java.lang.String.format;
 
@@ -52,21 +54,22 @@ public class FileLocationRepositoryImpl implements IFileLocationRepository {
 
     private static final String FIND_ALL_FILTER_EXPRESSION = "dataPartitionId = :partitionId AND createdAt BETWEEN :startDate and :endDate AND createdBy = :user";
     private final DpsHeaders headers;
-    private final DynamoDBQueryHelperFactory dynamoDBQueryHelperFactory;
+    private final IDynamoDBQueryHelperFactory dynamoDBQueryHelperFactory;
     private final ProviderConfigurationBag providerConfigurationBag;
 
     @Autowired
     public FileLocationRepositoryImpl(DpsHeaders headers,
-                                      DynamoDBQueryHelperFactory dynamoDBQueryHelperFactory,
+                                      IDynamoDBQueryHelperFactory dynamoDBQueryHelperFactory,
                                       ProviderConfigurationBag providerConfigurationBag) {
         this.headers = headers;
         this.dynamoDBQueryHelperFactory = dynamoDBQueryHelperFactory;
         this.providerConfigurationBag = providerConfigurationBag;
     }
 
-    private DynamoDBQueryHelperV2 getFileLocationQueryHelper() {
-        return dynamoDBQueryHelperFactory.getQueryHelperForPartition(headers,
-                                                                     providerConfigurationBag.fileLocationTableParameterRelativePath);
+    private DynamoDBQueryHelper<FileLocationDoc> getFileLocationQueryHelper() {
+        return dynamoDBQueryHelperFactory.createQueryHelper(headers,
+                                                           providerConfigurationBag.fileLocationTableParameterRelativePath,
+                                                           FileLocationDoc.class);
     }
 
     @Override
@@ -76,31 +79,26 @@ public class FileLocationRepositoryImpl implements IFileLocationRepository {
         }
 
         try {
-            DynamoDBQueryHelperV2 queryHelper = getFileLocationQueryHelper();
+            DynamoDBQueryHelper<FileLocationDoc> queryHelper = getFileLocationQueryHelper();
             String dataPartitionId = headers.getPartitionIdWithFallbackToAccountId();
 
-            FileLocationDoc doc = queryHelper.loadByPrimaryKey(FileLocationDoc.class, fileID, dataPartitionId);
+            Optional<FileLocationDoc> docOpt = queryHelper.getItem(fileID, dataPartitionId);
 
-            FileLocation fileLocation = null;
-            if (doc != null) {
-                fileLocation = doc.createFileLocationFromDoc();
-            }
-
-            return fileLocation;
+            return docOpt.map(FileLocationDoc::createFileLocationFromDoc).orElse(null);
         } catch (ResourceNotFoundException e) {
             throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                                   HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), e.getErrorMessage());
+                                   HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), e.getMessage());
         }
     }
 
     @Override
     public FileLocation save(FileLocation fileLocation) {
-        DynamoDBQueryHelperV2 queryHelper = getFileLocationQueryHelper();
+        DynamoDBQueryHelper<FileLocationDoc> queryHelper = getFileLocationQueryHelper();
         String dataPartitionId = headers.getPartitionIdWithFallbackToAccountId();
 
         FileLocationDoc doc = FileLocationDoc.createFileLocationDoc(fileLocation, dataPartitionId);
 
-        queryHelper.save(doc);
+        queryHelper.putItem(doc);
 
         return fileLocation;
     }
@@ -109,10 +107,10 @@ public class FileLocationRepositoryImpl implements IFileLocationRepository {
     public FileListResponse findAll(FileListRequest request) {
         FileListResponse response = new FileListResponse();
 
-        AttributeValue dataPartitionIdAV = new AttributeValue(headers.getPartitionIdWithFallbackToAccountId());
-        AttributeValue timeFromAV = new AttributeValue().withN(dateToEpoch(request.getTimeFrom()).toString());
-        AttributeValue timeToAV = new AttributeValue().withN(dateToEpoch(request.getTimeTo()).toString());
-        AttributeValue userAV = new AttributeValue(request.getUserID());
+        AttributeValue dataPartitionIdAV = AttributeValue.builder().s(headers.getPartitionIdWithFallbackToAccountId()).build();
+        AttributeValue timeFromAV = AttributeValue.builder().n(dateToEpoch(request.getTimeFrom()).toString()).build();
+        AttributeValue timeToAV = AttributeValue.builder().n(dateToEpoch(request.getTimeTo()).toString()).build();
+        AttributeValue userAV = AttributeValue.builder().s(request.getUserID()).build();
 
         Map<String, AttributeValue> eav = new HashMap<>();
         eav.put(":partitionId", dataPartitionIdAV);
@@ -121,37 +119,40 @@ public class FileLocationRepositoryImpl implements IFileLocationRepository {
         eav.put(":user", userAV);
 
         int pageSize = request.getItems();
-        int pageNum = request.getPageNum();
-        String pageNumStr = String.valueOf(pageNum);
-        if (pageNum <= 0) {
-            pageNumStr = null;
-        }
+        
+        ScanEnhancedRequest scanRequest = ScanEnhancedRequest.builder()
+            .filterExpression(software.amazon.awssdk.enhanced.dynamodb.Expression.builder()
+                .expression(FIND_ALL_FILTER_EXPRESSION)
+                .expressionValues(eav)
+                .build())
+            .limit(pageSize)
+            .build();
+            
         QueryPageResult<FileLocationDoc> docs;
         try {
-            DynamoDBQueryHelperV2 queryHelper = getFileLocationQueryHelper();
-            docs = queryHelper.scanPage(FileLocationDoc.class, pageSize, pageNumStr, FIND_ALL_FILTER_EXPRESSION, eav);
-        } catch (UnsupportedEncodingException e) {
+            DynamoDBQueryHelper<FileLocationDoc> queryHelper = getFileLocationQueryHelper();
+            docs = queryHelper.scanPage(scanRequest);
+        } catch (Exception e) {
             throw new OsduException(e.getMessage(), e);
         }
 
         if (docs != null) {
-            log.debug("Found {} records", docs.results.size());
+            log.debug("Found {} records", docs.getItems().size());
 
-            if (docs.results.isEmpty()) {
+            if (docs.getItems().isEmpty()) {
                 throw new FileLocationNotFoundException(
                     format("No file locations found for user %s and time range %s to %s", request.getUserID(), request.getTimeFrom(), request.getTimeTo()));
             }
 
-
             List<FileLocation> locations = new ArrayList<>();
-            for (FileLocationDoc doc : docs.results) {
+            for (FileLocationDoc doc : docs.getItems()) {
                 locations.add(doc.createFileLocationFromDoc());
             }
 
             response = FileListResponse.builder()
                 .content(locations)
                 .size(pageSize)
-                .number(pageNum)
+                .number(request.getPageNum())
                 .numberOfElements(locations.size()).build();
         }
 

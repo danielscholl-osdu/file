@@ -16,7 +16,8 @@
 
 package org.opengroup.osdu.file.provider.aws.impl;
 
-import com.amazonaws.services.s3.model.S3Object;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.binary.Hex;
 import org.opengroup.osdu.core.common.model.http.AppException;
@@ -81,10 +82,10 @@ public class StorageUtilServiceImpl implements IStorageUtilService {
 
     @Override
     public String getChecksum(String filePath) {
-        S3Object s3Obj = getS3Object(filePath);
+        ResponseInputStream<GetObjectResponse> s3Obj = getS3Object(filePath);
 
         final long maxBytes = 5368709120L; // 5G
-        if (s3Obj.getObjectMetadata().getContentLength() < maxBytes) {
+        if (s3Obj.response().contentLength() < maxBytes) {
             return calculateChecksum(s3Obj);
         } else {
             return "";
@@ -94,7 +95,7 @@ public class StorageUtilServiceImpl implements IStorageUtilService {
     @Override
     public ChecksumAlgorithm getChecksumAlgorithm() { return ChecksumAlgorithm.MD5; }
 
-    private S3Object getS3Object(String fileLocation) {
+    private ResponseInputStream<GetObjectResponse> getS3Object(String fileLocation) {
         S3Location unsignedLocation = S3Location.of(fileLocation);
         if (!unsignedLocation.isValid()) {
             throw new OsduBadRequestException(FileMetadataConstant.INVALID_SOURCE_EXCEPTION + fileLocation);
@@ -128,12 +129,12 @@ public class StorageUtilServiceImpl implements IStorageUtilService {
         return ExpirationDateHelper.getExpiration(Instant.now(), expirationDuration);
     }
 
-    private String calculateChecksum(S3Object s3Obj) {
+    private String calculateChecksum(ResponseInputStream<GetObjectResponse> s3Obj) {
         try {
             MessageDigest md = MessageDigest.getInstance(getChecksumAlgorithm().toString());
             byte[] bytes = new byte[StorageConstant.AWS_HASH_BYTE_ARRAY_LENGTH];
             int numBytes;
-            while ((numBytes = s3Obj.getObjectContent().read(bytes)) != -1) {
+            while ((numBytes = s3Obj.read(bytes)) != -1) {
                 md.update(bytes, 0, numBytes);
             }
             byte[] digest = md.digest();

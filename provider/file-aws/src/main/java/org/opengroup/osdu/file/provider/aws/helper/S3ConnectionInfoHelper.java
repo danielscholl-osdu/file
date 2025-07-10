@@ -18,8 +18,8 @@ package org.opengroup.osdu.file.provider.aws.helper;
 
 import org.opengroup.osdu.core.aws.partition.PartitionInfoAws;
 import org.opengroup.osdu.core.aws.partition.PartitionServiceClientWithCache;
-import org.opengroup.osdu.core.aws.s3.util.IS3ClientConnectionInfoHelper;
-import org.opengroup.osdu.core.aws.s3.util.S3ClientConnectionInfo;
+import org.opengroup.osdu.core.aws.v2.s3.util.IS3ClientConnectionInfoHelper;
+import org.opengroup.osdu.core.aws.v2.s3.util.S3ClientConnectionInfo;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.file.provider.aws.cache.S3ConnectionInfoCache;
 import org.springframework.context.annotation.Lazy;

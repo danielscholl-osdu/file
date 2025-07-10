@@ -18,22 +18,20 @@ package org.opengroup.osdu.file.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
-import com.amazonaws.services.securitytoken.model.AssumeRoleRequest;
-import com.amazonaws.services.securitytoken.model.AssumeRoleResult;
-import com.amazonaws.services.securitytoken.model.Credentials;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import software.amazon.awssdk.services.sts.model.AssumeRoleResponse;
+import software.amazon.awssdk.services.sts.model.Credentials;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengroup.osdu.file.provider.aws.auth.TemporaryCredentials;
 import org.opengroup.osdu.file.provider.aws.config.ProviderConfigurationBag;
@@ -46,8 +44,7 @@ import java.util.Date;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-@RunWith(MockitoJUnitRunner.class)
-public class StsHelperTest {
+class StsHelperTest {
 
     private final String roleArn = "arn:partition:service:region:account-id:resource-id";
     private final S3Location fileLocation = S3Location.of("s3://bucket/path/key");
@@ -57,10 +54,10 @@ public class StsHelperTest {
     @Mock
     private ProviderConfigurationBag providerConfigurationBag;
     @Mock
-    private AWSSecurityTokenService securityTokenService;
+    private StsClient securityTokenService;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         providerConfigurationBag.amazonRegion = "us-east-1";
         stsCredentialsHelper = new StsCredentialsHelper(providerConfigurationBag);
 
@@ -68,18 +65,20 @@ public class StsHelperTest {
     }
 
     @Test
-    public void shouldGetFolderCredentialsForSingleFileTypes() throws JSONException {
+    void shouldGetFolderCredentialsForSingleFileTypes() throws JSONException {
         String expectedArn = "arn:aws:s3:::bucket";
         Instant now = Instant.now();
         Date expirationDate = Date.from(now.plusSeconds(3600));
 
-        AssumeRoleResult mockAssumeRoleResult = Mockito.mock(AssumeRoleResult.class);
-        Credentials mockCredentials = new Credentials().withAccessKeyId("AccessKeyId")
-                                                       .withSessionToken("SessionToken")
-                                                       .withSecretAccessKey("SecretAccessKey")
-                                                       .withExpiration(expirationDate);
-        Mockito.when(mockAssumeRoleResult.getCredentials()).thenReturn(mockCredentials);
-        Mockito.when(securityTokenService.assumeRole(Mockito.any())).thenReturn(mockAssumeRoleResult);
+        AssumeRoleResponse mockAssumeRoleResponse = Mockito.mock(AssumeRoleResponse.class);
+        Credentials mockCredentials = Credentials.builder()
+                                                .accessKeyId("AccessKeyId")
+                                                .sessionToken("SessionToken")
+                                                .secretAccessKey("SecretAccessKey")
+                                                .expiration(expirationDate.toInstant())
+                                                .build();
+        Mockito.when(mockAssumeRoleResponse.credentials()).thenReturn(mockCredentials);
+        Mockito.when(securityTokenService.assumeRole(Mockito.any(AssumeRoleRequest.class))).thenReturn(mockAssumeRoleResponse);
 
         TemporaryCredentials credentials = stsCredentialsHelper.getRetrievalCredentials(fileLocation, roleArn, expirationDate);
 
@@ -87,55 +86,58 @@ public class StsHelperTest {
         Mockito.verify(securityTokenService, Mockito.times(1)).assumeRole(requestArgumentCaptor.capture());
         AssumeRoleRequest assumeRoleRequest = requestArgumentCaptor.getValue();
 
-        assertEquals(roleArn, assumeRoleRequest.getRoleArn());
+        assertEquals(roleArn, assumeRoleRequest.roleArn());
 
-        String policyJson = assumeRoleRequest.getPolicy();
+        String policyJson = assumeRoleRequest.policy();
         log.info("Policy: {}", policyJson);
 
         String resource = getBucketResourceArn(policyJson, expectedArn);
         assertEquals(expectedArn, resource);
-        assertEquals(mockCredentials.getAccessKeyId(), credentials.getAccessKeyId());
-        assertEquals(mockCredentials.getSecretAccessKey(), credentials.getSecretAccessKey());
-        assertEquals(mockCredentials.getSessionToken(), mockCredentials.getSessionToken());
+        assertEquals(mockCredentials.accessKeyId(), credentials.getAccessKeyId());
+        assertEquals(mockCredentials.secretAccessKey(), credentials.getSecretAccessKey());
+        assertEquals(mockCredentials.sessionToken(), credentials.getSessionToken());
     }
 
+    /* Duplicate test
     @Test
-    public void shouldGetFolderCredentialsForOvdsTypes() throws JSONException {
+    void shouldGetFolderCredentialsForOvdsTypes() throws JSONException {
         String expectedArn = "arn:aws:s3:::bucket";
         Instant now = Instant.now();
         Date expirationDate = Date.from(now.plusSeconds(3600));
 
-        AssumeRoleResult mockAssumeRoleResult = Mockito.mock(AssumeRoleResult.class);
-        Credentials mockCredentials = new Credentials().withAccessKeyId("AccessKeyId")
-                                                       .withSessionToken("SessionToken")
-                                                       .withSecretAccessKey("SecretAccessKey")
-                                                       .withExpiration(expirationDate);
-        Mockito.when(mockAssumeRoleResult.getCredentials()).thenReturn(mockCredentials);
-        Mockito.when(securityTokenService.assumeRole(Mockito.any())).thenReturn(mockAssumeRoleResult);
+        AssumeRoleResponse mockAssumeRoleResponse = Mockito.mock(AssumeRoleResponse.class);
+        Credentials mockCredentials = Credentials.builder()
+                                                .accessKeyId("AccessKeyId")
+                                                .sessionToken("SessionToken")
+                                                .secretAccessKey("SecretAccessKey")
+                                                .expiration(expirationDate.toInstant())
+                                                .build();
+        Mockito.when(mockAssumeRoleResponse.credentials()).thenReturn(mockCredentials);
+        Mockito.when(securityTokenService.assumeRole(Mockito.any(AssumeRoleRequest.class))).thenReturn(mockAssumeRoleResponse);
 
         TemporaryCredentials credentials = stsCredentialsHelper.getRetrievalCredentials(fileLocation, roleArn, expirationDate);
         ArgumentCaptor<AssumeRoleRequest> requestArgumentCaptor = ArgumentCaptor.forClass(AssumeRoleRequest.class);
         Mockito.verify(securityTokenService, Mockito.times(1)).assumeRole(requestArgumentCaptor.capture());
         AssumeRoleRequest assumeRoleRequest = requestArgumentCaptor.getValue();
 
-        assertEquals(roleArn, assumeRoleRequest.getRoleArn());
+        assertEquals(roleArn, assumeRoleRequest.roleArn());
 
-        String policyJson = assumeRoleRequest.getPolicy();
+        String policyJson = assumeRoleRequest.policy();
         log.info("Policy: {}", policyJson);
 
         String resource = getBucketResourceArn(policyJson, expectedArn);
         assertEquals(expectedArn, resource);
-        assertEquals(mockCredentials.getAccessKeyId(), credentials.getAccessKeyId());
-        assertEquals(mockCredentials.getSecretAccessKey(), credentials.getSecretAccessKey());
-        assertEquals(mockCredentials.getSessionToken(), mockCredentials.getSessionToken());
-    }
+        assertEquals(mockCredentials.accessKeyId(), credentials.getAccessKeyId());
+        assertEquals(mockCredentials.secretAccessKey(), credentials.getSecretAccessKey());
+        assertEquals(mockCredentials.sessionToken(), credentials.getSessionToken());
+    } */
 
     private String getBucketResourceArn(String policyJson, String arnToLookFor) throws JSONException {
         JSONObject policyObject = new JSONObject(policyJson);
         JSONArray statements = policyObject.getJSONArray("Statement");
         for (int i = 0; i < statements.length(); i++) {
-            if (statements.getJSONObject(i).getJSONArray("Resource").getString(0).equals(arnToLookFor)) {
-                return statements.getJSONObject(i).getJSONArray("Resource").getString(0);
+            if ( (statements.getJSONObject(i).get("Resource") instanceof String) && statements.getJSONObject(i).getString("Resource").equals(arnToLookFor)) {
+                return statements.getJSONObject(i).getString("Resource");
             }
         }
         return null;

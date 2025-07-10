@@ -16,11 +16,11 @@
 
 package org.opengroup.osdu.file.provider.aws.datamodel.entity;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTypeConverted;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbConvertedBy;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -35,27 +35,48 @@ import java.util.Date;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@DynamoDBTable(tableName = "FileLocationRepository") // DynamoDB table name (without environment prefix)
+@DynamoDbBean
 public class FileLocationDoc {
 
-    @DynamoDBHashKey(attributeName = "fileId")
     private String fileId;
-
-    @DynamoDBRangeKey(attributeName = "dataPartitionId")
     private String dataPartitionId;
-
-    @DynamoDBAttribute(attributeName = "driver")
     private String driver;
-
-    @DynamoDBAttribute(attributeName = "location")
     private String location;
-
-    @DynamoDBAttribute(attributeName = "createdAt")
-    @DynamoDBTypeConverted(converter = DateToEpochTypeConverter.class)
     private Date createdAt;
-
-    @DynamoDBAttribute(attributeName = "createdBy")
     private String createdBy;
+
+    @DynamoDbPartitionKey
+    @DynamoDbAttribute("fileId")
+    public String getFileId() {
+        return fileId;
+    }
+
+    @DynamoDbSortKey
+    @DynamoDbAttribute("dataPartitionId")
+    public String getDataPartitionId() {
+        return dataPartitionId;
+    }
+
+    @DynamoDbAttribute("driver")
+    public String getDriver() {
+        return driver;
+    }
+
+    @DynamoDbAttribute("location")
+    public String getLocation() {
+        return location;
+    }
+
+    @DynamoDbAttribute("createdAt")
+    @DynamoDbConvertedBy(DateToEpochTypeConverter.class)
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    @DynamoDbAttribute("createdBy")
+    public String getCreatedBy() {
+        return createdBy;
+    }
 
     public static FileLocationDoc createFileLocationDoc(FileLocation fileLocation, String dataPartitionId) {
         return FileLocationDoc.builder()

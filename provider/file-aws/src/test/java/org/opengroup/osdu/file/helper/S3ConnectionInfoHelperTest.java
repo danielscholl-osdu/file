@@ -16,6 +16,7 @@
 
 package org.opengroup.osdu.file.helper;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -23,25 +24,25 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengroup.osdu.core.aws.partition.PartitionInfoAws;
 import org.opengroup.osdu.core.aws.partition.PartitionServiceClientWithCache;
-import org.opengroup.osdu.core.aws.s3.util.IS3ClientConnectionInfoHelper;
+import org.opengroup.osdu.core.aws.v2.s3.util.IS3ClientConnectionInfoHelper;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.file.provider.aws.cache.S3ConnectionInfoCache;
 import org.opengroup.osdu.file.provider.aws.helper.S3ConnectionInfoHelper;
 
-@RunWith(MockitoJUnitRunner.class)
-public class S3ConnectionInfoHelperTest {
+@ExtendWith(MockitoExtension.class)
+class S3ConnectionInfoHelperTest {
 
     private final String partitionID = "partitionID";
     private final String bucketParameterRelativePath = "bucketParameterRelativePath";
     private final String tenantSSMPrefix = "tenantSSMPrefix";
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testGetS3ConnectionInfoForPartition_nullPartition() {
+    @Test
+    void testGetS3ConnectionInfoForPartition_nullPartition() {
 
         IS3ClientConnectionInfoHelper s3ConnectionInfoHelper = mock(IS3ClientConnectionInfoHelper.class);
         S3ConnectionInfoCache s3ConnectionInfoCache = mock(S3ConnectionInfoCache.class);
@@ -50,41 +51,47 @@ public class S3ConnectionInfoHelperTest {
 
         S3ConnectionInfoHelper helper = new S3ConnectionInfoHelper(s3ConnectionInfoHelper, s3ConnectionInfoCache, partitionServiceClient);
 
-        helper.getS3ConnectionInfoForPartition(headers, bucketParameterRelativePath);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void testGetS3ConnectionInfoForPartition_nullBucketPath() {
-
-        IS3ClientConnectionInfoHelper s3ConnectionInfoHelper = mock(IS3ClientConnectionInfoHelper.class);
-        S3ConnectionInfoCache s3ConnectionInfoCache = mock(S3ConnectionInfoCache.class);
-        PartitionServiceClientWithCache partitionServiceClient = mock(PartitionServiceClientWithCache.class);
-        DpsHeaders headers = mock(DpsHeaders.class);
-
-        when(headers.getPartitionIdWithFallbackToAccountId()).thenReturn(partitionID);
-
-        S3ConnectionInfoHelper helper = new S3ConnectionInfoHelper(s3ConnectionInfoHelper, s3ConnectionInfoCache, partitionServiceClient);
-
-        helper.getS3ConnectionInfoForPartition(headers, null);
-    }
-
-    @Test (expected = NullPointerException.class)
-    public void testGetS3ConnectionInfoForPartition_missingPartitionInfo() {
-
-        IS3ClientConnectionInfoHelper s3ConnectionInfoHelper = mock(IS3ClientConnectionInfoHelper.class);
-        S3ConnectionInfoCache s3ConnectionInfoCache = mock(S3ConnectionInfoCache.class);
-        PartitionServiceClientWithCache partitionServiceClient = mock(PartitionServiceClientWithCache.class);
-        DpsHeaders headers = mock(DpsHeaders.class);
-
-        when(headers.getPartitionIdWithFallbackToAccountId()).thenReturn(partitionID);
-
-        S3ConnectionInfoHelper helper = new S3ConnectionInfoHelper(s3ConnectionInfoHelper, s3ConnectionInfoCache, partitionServiceClient);
-
-        helper.getS3ConnectionInfoForPartition(headers, bucketParameterRelativePath);
+        assertThrows(IllegalArgumentException.class, () -> {
+            helper.getS3ConnectionInfoForPartition(headers, bucketParameterRelativePath);
+        });
     }
 
     @Test
-    public void testGetS3ConnectionInfoForPartition() {
+    void testGetS3ConnectionInfoForPartition_nullBucketPath() {
+
+        IS3ClientConnectionInfoHelper s3ConnectionInfoHelper = mock(IS3ClientConnectionInfoHelper.class);
+        S3ConnectionInfoCache s3ConnectionInfoCache = mock(S3ConnectionInfoCache.class);
+        PartitionServiceClientWithCache partitionServiceClient = mock(PartitionServiceClientWithCache.class);
+        DpsHeaders headers = mock(DpsHeaders.class);
+
+        when(headers.getPartitionIdWithFallbackToAccountId()).thenReturn(partitionID);
+
+        S3ConnectionInfoHelper helper = new S3ConnectionInfoHelper(s3ConnectionInfoHelper, s3ConnectionInfoCache, partitionServiceClient);
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            helper.getS3ConnectionInfoForPartition(headers, null);
+        });
+    }
+
+    @Test
+    void testGetS3ConnectionInfoForPartition_missingPartitionInfo() {
+
+        IS3ClientConnectionInfoHelper s3ConnectionInfoHelper = mock(IS3ClientConnectionInfoHelper.class);
+        S3ConnectionInfoCache s3ConnectionInfoCache = mock(S3ConnectionInfoCache.class);
+        PartitionServiceClientWithCache partitionServiceClient = mock(PartitionServiceClientWithCache.class);
+        DpsHeaders headers = mock(DpsHeaders.class);
+
+        when(headers.getPartitionIdWithFallbackToAccountId()).thenReturn(partitionID);
+
+        S3ConnectionInfoHelper helper = new S3ConnectionInfoHelper(s3ConnectionInfoHelper, s3ConnectionInfoCache, partitionServiceClient);
+
+        assertThrows(NullPointerException.class, () -> {
+            helper.getS3ConnectionInfoForPartition(headers, bucketParameterRelativePath);
+        });
+    }
+
+    @Test
+    void testGetS3ConnectionInfoForPartition() {
 
         IS3ClientConnectionInfoHelper s3ConnectionInfoHelper = mock(IS3ClientConnectionInfoHelper.class);
         S3ConnectionInfoCache s3ConnectionInfoCache = mock(S3ConnectionInfoCache.class);

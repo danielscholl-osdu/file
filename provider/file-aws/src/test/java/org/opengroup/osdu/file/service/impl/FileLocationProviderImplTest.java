@@ -17,6 +17,7 @@
 package org.opengroup.osdu.file.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -28,15 +29,14 @@ import java.net.URL;
 import java.time.Duration;
 import java.util.Date;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.opengroup.osdu.core.aws.s3.util.S3ClientConnectionInfo;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.opengroup.osdu.core.aws.v2.s3.util.S3ClientConnectionInfo;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.file.provider.aws.auth.TemporaryCredentials;
@@ -49,14 +49,12 @@ import org.opengroup.osdu.file.provider.aws.helper.StsRoleHelper;
 import org.opengroup.osdu.file.provider.aws.model.S3Location;
 import org.opengroup.osdu.file.provider.aws.service.impl.FileLocationProviderImpl;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.ResponseHeaderOverrides;
+import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 
 
-@RunWith(MockitoJUnitRunner.class)
-
-public class FileLocationProviderImplTest  {
+@ExtendWith(MockitoExtension.class)
+class FileLocationProviderImplTest  {
 
     private final String fileID = "fileID";
     private final String datasetID = "datasetID";
@@ -92,44 +90,47 @@ public class FileLocationProviderImplTest  {
 	@Mock
     S3Helper s3Helper;
 
-    AmazonS3 s3Mock = mock(AmazonS3.class);
-    AmazonS3ClientBuilder mocks3Builder = mock(AmazonS3ClientBuilder.class);
     MockedStatic<S3Helper> mockS3Helper;
 
-    @InjectMocks
     private FileLocationProviderImpl provider;
+    private final Duration duration = Duration.ofSeconds(1800);
 
-    @Before
-	public void setUp() throws Exception {
+    @BeforeEach
+	void setUp() {
         mockS3Helper = mockStatic(S3Helper.class);
+        provider = new FileLocationProviderImpl(providerConfigurationBag, stsCredentialsHelper, stsRoleHelper, s3ConnectionInfoHelper, headers);
 	}
 
-	@After
-	public void after() {
+	@AfterEach
+	void after() {
         mockS3Helper.close();
 	}	
 
-    @Test(expected = AppException.class)
-    public void testGetUploadFileLocation_nullS3ConnectionInfo() {
+    @Test
+    void testGetUploadFileLocation_nullS3ConnectionInfo() {
 
-        provider.getUploadFileLocation(fileID, partitionID);
+        assertThrows(AppException.class, () -> {
+            provider.getUploadFileLocation(fileID, partitionID);
+        });
 
     }
 
-    @Test(expected = AppException.class)
-    public void testGetUploadFileLocation_nullStsRoleArn() {
+    @Test
+    void testGetUploadFileLocation_nullStsRoleArn() {
 
         providerConfigurationBag.bucketParameterRelativePath = bucketParameterRelativePath;
         when(s3ConnectionInfoHelper.getS3ConnectionInfoForPartition(any(DpsHeaders.class), anyString())).thenReturn(new S3ClientConnectionInfo(bucketName, region, endpoint));
 
-        provider.getUploadFileLocation(fileID, partitionID);
+        assertThrows(AppException.class, () -> {
+            provider.getUploadFileLocation(fileID, partitionID);
+        });
 
     }
 
     
 
     @Test
-    public void testGetUploadLocation() throws MalformedURLException {
+    void testGetUploadLocation() throws MalformedURLException {
 
         TemporaryCredentials credentials = new TemporaryCredentials("accessKey", "secretKey", "sessionToken",
                 new Date(System.currentTimeMillis() + 3600L * 1000L));
@@ -147,8 +148,8 @@ public class FileLocationProviderImplTest  {
 
     }
 
-    @Test(expected = AppException.class)
-    public void testGetUploadFileLocation_badURI() throws MalformedURLException {
+    @Test
+    void testGetUploadFileLocation_badURI() throws MalformedURLException {
 
         TemporaryCredentials credentials = new TemporaryCredentials("accessKey", "secretKey", "sessionToken",
                 new Date(System.currentTimeMillis() + 3600L * 1000L));
@@ -161,46 +162,22 @@ public class FileLocationProviderImplTest  {
 
         mockS3Helper.when(() -> S3Helper.generatePresignedUrl(any(), any(), any(), any())).thenReturn(new URL(badURL));
 
-        provider.getUploadFileLocation(fileID, partitionID);
+        assertThrows(AppException.class, () -> {
+            provider.getUploadFileLocation(fileID, partitionID);
+        });
 
-    }
-
-    /**@Test(expected = IllegalArgumentException.class)
-    public void testGetUploadFileLocation_longObjectKey() throws MalformedURLException {
-
-        MockedStatic<S3Location> mockS3Location = mockStatic(S3Location.class);
-
-        TemporaryCredentials credentials = new TemporaryCredentials("accessKey", "secretKey", "sessionToken",
-                new Date(System.currentTimeMillis() + 3600L * 1000L));
-
-        //FileLocationProviderImpl provider = new FileLocationProviderImpl(providerConfigurationBag, stsCredentialsHelper, stsRoleHelper, s3ConnectionInfoHelper, headers);
-        providerConfigurationBag.bucketParameterRelativePath = bucketParameterRelativePath;
-        when(s3ConnectionInfoHelper.getS3ConnectionInfoForPartition(any(DpsHeaders.class), anyString())).thenReturn(new S3ClientConnectionInfo(bucketName, region, endpoint));
-        providerConfigurationBag.stsRoleIamParameterRelativePath = stsRoleIamParameterRelativePath;
-        when(stsRoleHelper.getRoleArnForPartition(any(DpsHeaders.class), anyString())).thenReturn(stsRoleArn);
-        when(stsCredentialsHelper.getUploadCredentials(any(), anyString(), any(), any())).thenReturn(credentials);
-        
-        S3LocationBuilder s3LocationBuilder = mock(S3LocationBuilder.class);
-        S3Location unsignedLocation = mock(S3Location.class);
-        when(unsignedLocation.getKey()).thenReturn(new String(new char[1025]).replace('\0', ' '));
-        when(s3LocationBuilder.build()).thenReturn(unsignedLocation);
-        when(s3LocationBuilder.withBucket(anyString())).thenReturn(s3LocationBuilder);
-        when(s3LocationBuilder.withFolder(anyString())).thenReturn(s3LocationBuilder);
-
-        mockS3Location.when(() -> S3Location.newBuilder()).thenReturn(s3LocationBuilder);
-
-        provider.getUploadFileLocation(fileID, partitionID);
-        mockS3Location.close();
-
-    }*/
-
-    @Test(expected = AppException.class)
-    public void testGetRetrievalFileLocation_nullStsRoleArn() {
-        provider.getRetrievalFileLocation(new S3Location(bucketName, keyName), Duration.ofSeconds(1800));
     }
 
     @Test
-    public void testGetRetrievalLocation() throws MalformedURLException {
+    void testGetRetrievalFileLocation_nullStsRoleArn() {
+        S3Location s3Location = new S3Location(bucketName, keyName);
+        assertThrows(AppException.class, () -> {
+            provider.getRetrievalFileLocation(s3Location, duration);
+        });
+    }
+
+    @Test
+    void testGetRetrievalLocation() throws MalformedURLException {
 
         TemporaryCredentials credentials = new TemporaryCredentials("accessKey", "secretKey", "sessionToken",
                 new Date(System.currentTimeMillis() + 3600L * 1000L));
@@ -213,12 +190,12 @@ public class FileLocationProviderImplTest  {
         mockS3Helper.when(() -> S3Helper.doesObjectCollectionExist(any(), any())).thenReturn(true);
         mockS3Helper.when(() -> S3Helper.generatePresignedUrl(any(), any(), any(), any())).thenReturn(new URL(localhost));
 
-        assertNotNull(provider.getRetrievalFileLocation(new S3Location(bucketName, keyName), Duration.ofSeconds(1800)));
-        assertNotNull(provider.getFileCollectionRetrievalLocation(new S3Location(bucketName, keyName + "/"), Duration.ofSeconds(1800)));
+        assertNotNull(provider.getRetrievalFileLocation(new S3Location(bucketName, keyName), duration));
+        assertNotNull(provider.getFileCollectionRetrievalLocation(new S3Location(bucketName, keyName + "/"), duration));
     }
 
     @Test
-    public void testGetRetrievalFileLocation_responseHeaderOverrides() throws MalformedURLException {
+    void testGetRetrievalFileLocation_responseHeaderOverrides() throws MalformedURLException {
 
         TemporaryCredentials credentials = new TemporaryCredentials("accessKey", "secretKey", "sessionToken",
                 new Date(System.currentTimeMillis() + 3600L * 1000L));
@@ -229,12 +206,13 @@ public class FileLocationProviderImplTest  {
 
         mockS3Helper.when(() -> S3Helper.doesObjectExist(any(), any())).thenReturn(true);
         mockS3Helper.when(() -> S3Helper.generatePresignedUrl(any(), any(), any(), any(), any())).thenReturn(new URL(localhost));
+        AwsRequestOverrideConfiguration awsRequestOverrideConfiguration = mock(AwsRequestOverrideConfiguration.class);
 
-        assertNotNull(provider.getRetrievalFileLocation(new S3Location(bucketName, keyName), Duration.ofSeconds(1800), new ResponseHeaderOverrides()));
+        assertNotNull(provider.getRetrievalFileLocation(new S3Location(bucketName, keyName), duration, awsRequestOverrideConfiguration));
     }
 
-    @Test(expected = AppException.class)
-    public void testGetRetrievalFileLocation_badURI() throws MalformedURLException {
+    @Test
+    void testGetRetrievalFileLocation_badURI() throws MalformedURLException {
 
         TemporaryCredentials credentials = new TemporaryCredentials("accessKey", "secretKey", "sessionToken",
                 new Date(System.currentTimeMillis() + 3600L * 1000L));
@@ -245,12 +223,15 @@ public class FileLocationProviderImplTest  {
 
         mockS3Helper.when(() -> S3Helper.doesObjectExist(any(), any())).thenReturn(true);
         mockS3Helper.when(() -> S3Helper.generatePresignedUrl(any(), any(), any(), any())).thenReturn(new URL(badURL));
+        S3Location s3Location = new S3Location(bucketName, keyName);
 
-        provider.getRetrievalFileLocation(new S3Location(bucketName, keyName), Duration.ofSeconds(1800));
+        assertThrows(AppException.class, () -> {
+            provider.getRetrievalFileLocation(s3Location, duration);
+        });
     }
 
-    @Test(expected = AppException.class)
-    public void validateInput_invalidObjectKey() {
+    @Test
+    void validateInput_invalidObjectKey() {
 
         S3Location unsignedLocation = mock(S3Location.class);
 
@@ -258,11 +239,13 @@ public class FileLocationProviderImplTest  {
         when(unsignedLocation.isValid()).thenReturn(true);
         when(unsignedLocation.isFolder()).thenReturn(true);
 
-        provider.getRetrievalFileLocation(unsignedLocation, Duration.ofSeconds(1800));
+        assertThrows(AppException.class, () -> {
+            provider.getRetrievalFileLocation(unsignedLocation, duration);
+        });
     }
 
-    @Test(expected = AppException.class)
-    public void validateInput_FileCollection_invalidObjectKey() {
+    @Test
+    void validateInput_FileCollection_invalidObjectKey() {
 
         S3Location unsignedLocation = mock(S3Location.class);
 
@@ -270,11 +253,13 @@ public class FileLocationProviderImplTest  {
         when(unsignedLocation.isValid()).thenReturn(true);
         when(unsignedLocation.isFile()).thenReturn(true);
 
-        provider.getFileCollectionRetrievalLocation(unsignedLocation, Duration.ofSeconds(1800));
+        assertThrows(AppException.class, () -> {
+            provider.getFileCollectionRetrievalLocation(unsignedLocation, duration);
+        });
     }
 
-    @Test(expected = AppException.class)
-    public void validateInput_fileNotExist() {
+    @Test
+    void validateInput_fileNotExist() {
 
         S3Location unsignedLocation = mock(S3Location.class);
 
@@ -283,11 +268,13 @@ public class FileLocationProviderImplTest  {
         when(unsignedLocation.isFolder()).thenReturn(false);
         mockS3Helper.when(() -> S3Helper.doesObjectExist(any(), any())).thenReturn(false);
 
-        provider.getRetrievalFileLocation(unsignedLocation, Duration.ofSeconds(1800));
+        assertThrows(AppException.class, () -> {
+            provider.getRetrievalFileLocation(unsignedLocation, duration);
+        });
     }
 
-    @Test(expected = AppException.class)
-    public void validateInput_folderNotExist() {
+    @Test
+    void validateInput_folderNotExist() {
 
         S3Location unsignedLocation = mock(S3Location.class);
 
@@ -295,7 +282,9 @@ public class FileLocationProviderImplTest  {
         when(unsignedLocation.isValid()).thenReturn(true);
         mockS3Helper.when(() -> S3Helper.doesObjectCollectionExist(any(), any())).thenReturn(false);
 
-        provider.getFileCollectionRetrievalLocation(unsignedLocation, Duration.ofSeconds(1800));
+        assertThrows(AppException.class, () -> {
+            provider.getFileCollectionRetrievalLocation(unsignedLocation, duration);
+        });
     }
     
 }

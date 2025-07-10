@@ -45,7 +45,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
 
-import com.amazonaws.services.s3.model.ResponseHeaderOverrides;
+import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -133,22 +133,22 @@ public class StorageServiceImpl implements IStorageService {
 
         String fileName = signedUrlParameters.getFileName();
         String contentType = signedUrlParameters.getContentType();
-        ResponseHeaderOverrides responseHeaderOverrides = new ResponseHeaderOverrides();
+        Map<String, List<String>> headOverrides = new HashMap<>();
 
         if (Objects.nonNull(fileName) && !fileName.isEmpty()) {
-        	responseHeaderOverrides.setContentDisposition("attachment; filename =\"" + fileName + "\"");
-
+            headOverrides.put("response-content-disposition", List.of("attachment; filename =\"" + fileName + "\""));
         }
 
         if (Objects.nonNull(contentType) && !contentType.isEmpty()) {
-        	responseHeaderOverrides.setContentType(contentType);
+            headOverrides.put("response-content-type", List.of(contentType));
         }
 
+        AwsRequestOverrideConfiguration overrideConfiguration = AwsRequestOverrideConfiguration.builder().headers(headOverrides).build();
 
         final RelativeTimeValue relativeTimeValue = expiryTimeUtil.getExpiryTimeValueInTimeUnit(signedUrlParameters.getExpiryTime());
         final long expireInMillis = relativeTimeValue.getTimeUnit().toMillis(relativeTimeValue.getValue());
         final Duration expiration = Duration.ofMillis(expireInMillis);
-        final ProviderLocation fileLocation = fileLocationProvider.getRetrievalFileLocation(unsignedLocation, expiration, responseHeaderOverrides);
+        final ProviderLocation fileLocation = fileLocationProvider.getRetrievalFileLocation(unsignedLocation, expiration, overrideConfiguration);
 
         return mapTo(fileLocation);
     }

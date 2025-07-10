@@ -16,10 +16,14 @@
 
 package org.opengroup.osdu.file.provider.aws.auth;
 
-import com.amazonaws.auth.AWSSessionCredentials;
-import com.amazonaws.auth.AWSSessionCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+import software.amazon.awssdk.core.exception.SdkClientException;
 
-public class TemporaryCredentialsProvider implements AWSSessionCredentialsProvider {
+import java.util.Date;
+
+public class TemporaryCredentialsProvider implements AwsCredentialsProvider {
 
     private final TemporaryCredentials temporaryCredentials;
 
@@ -28,12 +32,17 @@ public class TemporaryCredentialsProvider implements AWSSessionCredentialsProvid
     }
 
     @Override
-    public void refresh() {
-        //Do nothing here, Overriding.
-    }
+    public AwsCredentials resolveCredentials() {
+            // Check if credentials are expired
+            if (temporaryCredentials.getExpiration() != null &&
+                temporaryCredentials.getExpiration().before(new Date())) {
+                throw SdkClientException.create("Credentials have expired");
+            }
 
-    @Override
-    public AWSSessionCredentials getCredentials() {
-        return temporaryCredentials;
+            return AwsSessionCredentials.create(
+                temporaryCredentials.getAccessKeyId(),
+                temporaryCredentials.getSecretAccessKey(),
+                temporaryCredentials.getSessionToken()
+            );
     }
 }

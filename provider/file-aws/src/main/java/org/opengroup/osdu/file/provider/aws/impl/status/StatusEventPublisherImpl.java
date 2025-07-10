@@ -16,12 +16,12 @@
 
 package org.opengroup.osdu.file.provider.aws.impl.status;
 
-import com.amazonaws.services.sns.AmazonSNS;
-import com.amazonaws.services.sns.model.PublishRequest;
+import software.amazon.awssdk.services.sns.SnsClient;
+import software.amazon.awssdk.services.sns.model.PublishRequest;
 import lombok.RequiredArgsConstructor;
-import org.opengroup.osdu.core.aws.sns.AmazonSNSConfig;
-import org.opengroup.osdu.core.aws.sns.PublishRequestBuilder;
-import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
+import org.opengroup.osdu.core.aws.v2.sns.AmazonSNSConfig;
+import org.opengroup.osdu.core.aws.v2.sns.PublishRequestBuilder;
+import org.opengroup.osdu.core.aws.v2.ssm.K8sLocalParameterProvider;
 import org.opengroup.osdu.core.common.exception.CoreException;
 import org.opengroup.osdu.core.common.model.status.Message;
 import org.opengroup.osdu.core.common.status.IEventPublisher;
@@ -38,7 +38,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class StatusEventPublisherImpl implements IEventPublisher {
 
-    private AmazonSNS snsClient;
+    private SnsClient snsClient;
     private String amazonSnsTopic;
 
     @Value("${OSDU_TOPIC}")
