@@ -16,8 +16,6 @@
 
 package org.opengroup.osdu.file.provider.aws.auth;
 
-import com.amazonaws.auth.AWSSessionCredentials;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,7 +29,7 @@ import java.util.Date;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TemporaryCredentials implements AWSSessionCredentials {
+public class TemporaryCredentials {
 
     private static String connStringFormat = "AccessKeyId=%s;SecretAccessKey=%s;SessionToken=%s;Expiration=%s";
 
@@ -54,17 +52,5 @@ public class TemporaryCredentials implements AWSSessionCredentials {
 
         String expirationString = DateTimeFormatter.ISO_INSTANT.format(expiration.toInstant());
         return String.format(connStringFormat, accessKeyId, secretAccessKey, sessionToken, expirationString);
-    }
-
-    @Override
-    @JsonIgnore
-    public String getAWSAccessKeyId() {
-        return accessKeyId;
-    }
-
-    @Override
-    @JsonIgnore
-    public String getAWSSecretKey() {
-        return secretAccessKey;
     }
 }

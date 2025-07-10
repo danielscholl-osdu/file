@@ -16,7 +16,7 @@
 
 package org.opengroup.osdu.file.provider.aws.cache;
 
-import org.opengroup.osdu.core.aws.s3.util.S3ClientConnectionInfo;
+import org.opengroup.osdu.core.aws.v2.s3.util.S3ClientConnectionInfo;
 import org.opengroup.osdu.core.common.cache.VmCache;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;

@@ -18,7 +18,7 @@ package org.opengroup.osdu.file.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengroup.osdu.file.provider.aws.helper.ExpirationDateHelper;
@@ -32,16 +32,14 @@ import java.time.ZoneId;
 import java.util.Date;
 
 @ExtendWith(MockitoExtension.class)
-public class ExpirationDateHelperTest {
+class ExpirationDateHelperTest {
 
     @Test
-    public void shouldOffsetTimeByDuration() throws ParseException {
+    void shouldOffsetTimeByDuration() throws ParseException {
         long offSetInDays = 1;
         DateFormat dt = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         Date start = dt.parse("01/01/2020 00:00:00");
         Duration span = Duration.ofDays(offSetInDays);
-
-        LocalDateTime newDateTime = start.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
 
         Date actual = ExpirationDateHelper.getExpiration(start.toInstant(), span);
         Date expected = dt.parse("02/01/2020 00:00:00");
