@@ -16,7 +16,7 @@
 
 package org.opengroup.osdu.file.provider.aws.helper;
 
-import com.amazonaws.services.simplesystemsmanagement.model.Parameter;
+import software.amazon.awssdk.services.ssm.model.Parameter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.opengroup.osdu.core.aws.partition.PartitionInfoAws;
 import org.opengroup.osdu.core.aws.partition.PartitionServiceClientWithCache;
-import org.opengroup.osdu.core.aws.ssm.SSMManagerUtil;
+import org.opengroup.osdu.core.aws.v2.ssm.SSMManagerUtil;
 import org.opengroup.osdu.core.common.exception.NotFoundException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.file.provider.aws.cache.StsIamRoleCache;
@@ -99,8 +99,8 @@ public class StsRoleHelper {
 
         Map<String, String> tableParamsMap = tableParams
                                                  .stream()
-                                                 .collect(Collectors.toMap(p -> StringUtils.substringAfterLast(p.getName(), "/"),
-                                                                           Parameter::getValue));
+                                                 .collect(Collectors.toMap(p -> StringUtils.substringAfterLast(p.name(), "/"),
+                                                                           Parameter::value));
 
         return convertToStsIamInfo(tableParamsMap);
     }

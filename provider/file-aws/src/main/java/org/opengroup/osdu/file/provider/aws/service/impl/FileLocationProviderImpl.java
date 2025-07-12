@@ -16,12 +16,13 @@
 
 package org.opengroup.osdu.file.provider.aws.service.impl;
 
-import com.amazonaws.HttpMethod;
-import com.amazonaws.services.s3.model.ResponseHeaderOverrides;
+import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration;
+import software.amazon.awssdk.http.SdkHttpMethod;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.opengroup.osdu.core.aws.s3.util.S3ClientConnectionInfo;
+import org.opengroup.osdu.core.aws.v2.s3.util.S3ClientConnectionInfo;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.file.provider.aws.auth.TemporaryCredentials;
@@ -47,6 +48,7 @@ import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -86,8 +88,8 @@ public class FileLocationProviderImpl implements FileLocationProvider {
     }
 
     @Override
-    public ProviderLocation getRetrievalFileLocation(S3Location unsignedLocation, Duration expirationDuration, ResponseHeaderOverrides responseHeaderOverrides) {
-        return getRetrievalLocationInternal(false, unsignedLocation, expirationDuration, responseHeaderOverrides);
+    public ProviderLocation getRetrievalFileLocation(S3Location unsignedLocation, Duration expirationDuration, AwsRequestOverrideConfiguration requestOverrideConfiguration) {
+        return getRetrievalLocationInternal(false, unsignedLocation, expirationDuration, requestOverrideConfiguration);
     }
 
     @Override
@@ -137,7 +139,7 @@ public class FileLocationProviderImpl implements FileLocationProvider {
 
         try {
             final S3Location s3LocationForSignedUpload = s3LocationBuilder.build();
-            final URL s3SignedUrl = S3Helper.generatePresignedUrl(s3LocationForSignedUpload, HttpMethod.PUT, expiration, credentials);
+            final URL s3SignedUrl = S3Helper.generatePresignedUrl(s3LocationForSignedUpload, SdkHttpMethod.PUT, expiration, credentials);
 
             return ProviderLocation.builder()
                 .unsignedUrl(unsignedLocation.toString())
@@ -218,13 +220,13 @@ public class FileLocationProviderImpl implements FileLocationProvider {
         }
     }
 
-    private ProviderLocation getRetrievalLocationInternal(boolean isCollection, S3Location unsignedLocation, Duration expirationDuration, ResponseHeaderOverrides responseHeaderOverrides) {
+    private ProviderLocation getRetrievalLocationInternal(boolean isCollection, S3Location unsignedLocation, Duration expirationDuration, AwsRequestOverrideConfiguration requestOverrideConfiguration) {
         final Date expiration = ExpirationDateHelper.getExpiration(Instant.now(), expirationDuration);
         final TemporaryCredentials credentials = getTemporaryCredentials(unsignedLocation, expiration);
         validateInput(isCollection, unsignedLocation, credentials);
 
         // Signed URLs only support single files.
-        final URL s3SignedUrl = isCollection ? null : S3Helper.generatePresignedUrl(unsignedLocation, HttpMethod.GET, expiration, credentials, responseHeaderOverrides);
+        final URL s3SignedUrl = isCollection ? null : S3Helper.generatePresignedUrl(unsignedLocation, SdkHttpMethod.GET, expiration, credentials, requestOverrideConfiguration);
         return getProviderLocation(isCollection, unsignedLocation, credentials, s3SignedUrl);
     }
 
@@ -234,7 +236,7 @@ public class FileLocationProviderImpl implements FileLocationProvider {
         validateInput(isCollection, unsignedLocation, credentials);
 
         // Signed URLs only support single files.
-        final URL s3SignedUrl = isCollection ? null : S3Helper.generatePresignedUrl(unsignedLocation, HttpMethod.GET, expiration, credentials);
+        final URL s3SignedUrl = isCollection ? null : S3Helper.generatePresignedUrl(unsignedLocation, SdkHttpMethod.GET, expiration, credentials);
         return getProviderLocation(isCollection, unsignedLocation, credentials, s3SignedUrl);
     }
 

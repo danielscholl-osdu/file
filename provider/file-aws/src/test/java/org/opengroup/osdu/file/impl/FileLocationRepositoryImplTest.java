@@ -16,31 +16,33 @@
 
 package org.opengroup.osdu.file.impl;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.UnsupportedEncodingException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.opengroup.osdu.core.aws.dynamodb.DynamoDBQueryHelperFactory;
-import org.opengroup.osdu.core.aws.dynamodb.DynamoDBQueryHelperV2;
-import org.opengroup.osdu.core.aws.dynamodb.QueryPageResult;
-import org.opengroup.osdu.core.aws.exceptions.InvalidCursorException;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.opengroup.osdu.core.aws.v2.dynamodb.interfaces.IDynamoDBQueryHelperFactory;
+import org.opengroup.osdu.core.aws.v2.dynamodb.DynamoDBQueryHelper;
+import org.opengroup.osdu.core.aws.v2.dynamodb.model.QueryPageResult;
+import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
 import org.opengroup.osdu.core.common.model.file.DriverType;
 import org.opengroup.osdu.core.common.model.file.FileListRequest;
 import org.opengroup.osdu.core.common.model.file.FileLocation;
@@ -52,11 +54,11 @@ import org.opengroup.osdu.file.provider.aws.config.ProviderConfigurationBag;
 import org.opengroup.osdu.file.provider.aws.datamodel.entity.FileLocationDoc;
 import org.opengroup.osdu.file.provider.aws.impl.FileLocationRepositoryImpl;
 
-import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
+import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
 
 
-@RunWith(MockitoJUnitRunner.class)
-public class FileLocationRepositoryImplTest {
+@ExtendWith(MockitoExtension.class)
+class FileLocationRepositoryImplTest {
 
     private final String fileID = "fileID";
     private final String partitionID = "partitionID";
@@ -65,105 +67,100 @@ public class FileLocationRepositoryImplTest {
     private final Date createdAt = Date.from(Instant.now());
     private final String createdBy = "createdBy";
     private final String cursor = "cursor";
+    private final String TABLE_PARAMETER_PATH="whatevertablepath";
 
     @Mock
     DpsHeaders headers;
 
     @Mock
-    DynamoDBQueryHelperFactory dynamoDBQueryHelperFactory;
+    IDynamoDBQueryHelperFactory queryHelperFactory;
 
     @Mock
     ProviderConfigurationBag providerConfigurationBag;
 
-    @InjectMocks
-    FileLocationRepositoryImpl repository;
+    @Mock
+    DynamoDBQueryHelper<FileLocationDoc> queryHelper;
+
+    private FileLocationRepositoryImpl repository;
+
+    @BeforeEach
+    void setup() {
+        lenient().when(queryHelperFactory.createQueryHelper(headers, providerConfigurationBag.fileLocationTableParameterRelativePath, FileLocationDoc.class)).thenReturn(queryHelper);
+        repository = new FileLocationRepositoryImpl(headers, queryHelperFactory, providerConfigurationBag);
+    }
 
     @Test
-    public void testFindByFileID_null() {
+    void testFindByFileID_null() {
         assertNull(repository.findByFileID(null));
     }
 
-    @Test(expected = AppException.class)
-    public void testFindByFileID_resourceNotFound() {
+    @Test
+    void testFindByFileID_resourceNotFound() {
+        doThrow(ResourceNotFoundException.class).when(queryHelper).getItem(anyString(), any());
 
-        DynamoDBQueryHelperV2 queryHelper = mock(DynamoDBQueryHelperV2.class);
+        AppException exception = assertThrows(AppException.class, () -> {
+            repository.findByFileID(fileID);
+        });
 
-        when(queryHelper.loadByPrimaryKey(any(), anyString(), any())).thenThrow(new ResourceNotFoundException(fileID));
-        when(dynamoDBQueryHelperFactory.getQueryHelperForPartition(any(DpsHeaders.class), any())).thenReturn(queryHelper);
-
-        repository.findByFileID(fileID);
+        assertEquals(500, exception.getError().getCode());
     }
 
     @Test
-    public void testFindByFileID() {
-
-        DynamoDBQueryHelperV2 queryHelper = mock(DynamoDBQueryHelperV2.class);
-        FileLocationDoc doc = mock(FileLocationDoc.class);
-
-        when(dynamoDBQueryHelperFactory.getQueryHelperForPartition(any(DpsHeaders.class), any())).thenReturn(queryHelper);
-        when(queryHelper.loadByPrimaryKey(any(), anyString(), any())).thenReturn(doc);
-
-        assertNull(repository.findByFileID(fileID));
+    void testFindByFileID() {
+        FileLocationDoc doc = FileLocationDoc.builder().driver("GCS").build();
+        when(queryHelper.getItem(anyString(), any())).thenReturn(Optional.of(doc));
+        assertNotNull(repository.findByFileID(fileID));
     }
 
     @Test
-    public void testSave() {
-        DynamoDBQueryHelperV2 queryHelper = mock(DynamoDBQueryHelperV2.class);
-
-        when(dynamoDBQueryHelperFactory.getQueryHelperForPartition(any(DpsHeaders.class), any())).thenReturn(queryHelper);
+    void testSave() {
         when(headers.getPartitionIdWithFallbackToAccountId()).thenReturn(partitionID);
-
         FileLocation fileLocation = new FileLocation(fileID, driver, location, createdAt, createdBy);
         assertEquals(fileLocation, repository.save(fileLocation));
     }
 
-    @Test(expected = OsduException.class)
-    public void testFindAll_UnsupportedEncoding() throws InvalidCursorException, UnsupportedEncodingException {
+    @Test
+    void testFindAll_Exception() {
 
         short num = 1000;
 
         FileListRequest request = new FileListRequest(LocalDateTime.now(), LocalDateTime.of(2040, 1, 1, 1, 0, 0), 0, num, "userID");
-        DynamoDBQueryHelperV2 queryHelper = mock(DynamoDBQueryHelperV2.class);
-
-        when(dynamoDBQueryHelperFactory.getQueryHelperForPartition(any(DpsHeaders.class), any())).thenReturn(queryHelper);
-        when(queryHelper.scanPage(any(), anyInt(), any(), anyString(), anyMap())).thenThrow(new UnsupportedEncodingException());
+        when(queryHelper.scanPage(any(ScanEnhancedRequest.class))).thenThrow(new RuntimeException());
         when(headers.getPartitionIdWithFallbackToAccountId()).thenReturn(partitionID);
 
-        repository.findAll(request);
+        assertThrows(OsduException.class, () -> {
+            repository.findAll(request);
+        });
     }
 
     @Test
-    public void testFindAll() throws InvalidCursorException, UnsupportedEncodingException {
+    void testFindAll() {
 
         short num = 1000;
 
         FileListRequest request = new FileListRequest(LocalDateTime.now(), LocalDateTime.of(2040, 1, 1, 1, 0, 0), 0, num, "userID");
         List<FileLocationDoc> results = new ArrayList<FileLocationDoc>();
         FileLocationDoc doc = mock(FileLocationDoc.class);
-        DynamoDBQueryHelperV2 queryHelper = mock(DynamoDBQueryHelperV2.class);
-        QueryPageResult<FileLocationDoc> docs = new QueryPageResult<FileLocationDoc>(cursor, results);
+        QueryPageResult<FileLocationDoc> docs = new QueryPageResult<FileLocationDoc>(results, null, null);
 
         results.add(doc);
         when(doc.createFileLocationFromDoc()).thenReturn(new FileLocation());
-        when(dynamoDBQueryHelperFactory.getQueryHelperForPartition(any(DpsHeaders.class), any())).thenReturn(queryHelper);
-        doReturn(docs).when(queryHelper).scanPage(any(), anyInt(), any(), anyString(), anyMap());
+        doReturn(docs).when(queryHelper).scanPage(any(ScanEnhancedRequest.class));
         when(headers.getPartitionIdWithFallbackToAccountId()).thenReturn(partitionID);
 
         assertNotNull(repository.findAll(request));
     }
 
     @Test
-    public void testFindAll_empty() throws InvalidCursorException, UnsupportedEncodingException {
+    void testFindAll_empty() {
 
         short num = 1000;
 
         FileListRequest request = new FileListRequest(LocalDateTime.of(2024, 11, 21, 15, 21, 4), LocalDateTime.of(2040, 1, 1, 1, 0, 0), 0, num, "userID");
         List<FileLocationDoc> results = new ArrayList<FileLocationDoc>();
-        DynamoDBQueryHelperV2 queryHelper = mock(DynamoDBQueryHelperV2.class);
-        QueryPageResult<FileLocationDoc> docs = new QueryPageResult<FileLocationDoc>(cursor, results);
+        QueryPageResult<FileLocationDoc> docs = new QueryPageResult<FileLocationDoc>(results, null, null);
 
-        when(dynamoDBQueryHelperFactory.getQueryHelperForPartition(any(DpsHeaders.class), any())).thenReturn(queryHelper);
-        doReturn(docs).when(queryHelper).scanPage(any(), anyInt(), any(), anyString(), anyMap());
+        doReturn(docs).when(queryHelper).scanPage(any(ScanEnhancedRequest.class));
         when(headers.getPartitionIdWithFallbackToAccountId()).thenReturn(partitionID);
 
         FileLocationNotFoundException exception = assertThrows(FileLocationNotFoundException.class, () -> {
@@ -171,7 +168,6 @@ public class FileLocationRepositoryImplTest {
         });
 
         assertEquals("No file locations found for user userID and time range 2024-11-21T15:21:04 to 2040-01-01T01:00", exception.getMessage());
-
 
     }
 }

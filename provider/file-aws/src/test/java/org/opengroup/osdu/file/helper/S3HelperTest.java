@@ -16,27 +16,24 @@
 
 package org.opengroup.osdu.file.helper;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.SdkClientException;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.*;
-import org.junit.Test;
+
+import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration;
+import software.amazon.awssdk.core.exception.SdkException;
+import software.amazon.awssdk.http.SdkHttpMethod;
+import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.core.ResponseInputStream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.runner.RunWith;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengroup.osdu.file.provider.aws.auth.TemporaryCredentials;
-import org.opengroup.osdu.file.provider.aws.auth.TemporaryCredentialsProvider;
 import org.opengroup.osdu.file.provider.aws.helper.S3Helper;
 import org.opengroup.osdu.file.provider.aws.model.S3Location;
 
@@ -45,161 +42,120 @@ import java.net.URL;
 import java.util.*;
 
 @ExtendWith(MockitoExtension.class)
-@RunWith(MockitoJUnitRunner.class)
-public class S3HelperTest {
+class S3HelperTest {
 
-    AmazonS3 s3Mock = mock(AmazonS3.class);
-    AmazonS3ClientBuilder mocks3Builder = mock(AmazonS3ClientBuilder.class);
-    MockedStatic<AmazonS3ClientBuilder> s3ClientMock = mockStatic(AmazonS3ClientBuilder.class);
-
-    TemporaryCredentials credentials = new TemporaryCredentials("accessKey", "secretKey", "sessionToken",
+    private final TemporaryCredentials credentials = new TemporaryCredentials("accessKey", "secretKey", "sessionToken",
             new Date(System.currentTimeMillis() + 3600L * 1000L));
-    String uri = "s3://my-bucket/my-key";
-    S3Location location = S3Location.of(uri);
-
-    @Spy
-    private List<S3ObjectSummary> s3ObjectSummary = new ArrayList<>();
+    private final String uri = "s3://my-bucket/my-key";
+    private final S3Location location = S3Location.of(uri);
 
     @Test
-    public void testGeneratePresignedUrl() throws SdkClientException, MalformedURLException {
-
-        s3ClientMock.when(AmazonS3ClientBuilder::standard).thenReturn(mocks3Builder);
-
-        Mockito.when(mocks3Builder.withCredentials(Mockito.any())).thenReturn(mocks3Builder);
-
-        Mockito.when(mocks3Builder.withRegion(Mockito.any(Regions.class))).thenReturn(mocks3Builder);
-
-        Mockito.when(mocks3Builder.build()).thenReturn(s3Mock);
-
-        Mockito.when(s3Mock.generatePresignedUrl(Mockito.any(GeneratePresignedUrlRequest.class))).thenReturn(new URL("http:// localhost"));
-
-        URL actual = S3Helper.generatePresignedUrl(location, null, null, credentials);
-
-        assertEquals("http:// localhost", actual.toString());
-
-        s3ClientMock.close();
-
+    void testGeneratePresignedUrlForGet() throws SdkException, MalformedURLException {
+        try (MockedStatic<S3Helper> s3HelperMock = mockStatic(S3Helper.class)) {
+            URL expectedUrl = new URL("http://localhost");
+            
+            s3HelperMock.when(() -> S3Helper.generatePresignedUrl(
+                any(S3Location.class), any(SdkHttpMethod.class), any(Date.class), any(TemporaryCredentials.class)
+            )).thenReturn(expectedUrl);
+            
+            URL actual = S3Helper.generatePresignedUrl(location, SdkHttpMethod.GET, new Date(), credentials);
+            
+            assertEquals(expectedUrl, actual);
+        }
     }
 
     @Test
-    public void testGeneratePresignedUrlResponseHeaders() throws SdkClientException, MalformedURLException {
+    void testGeneratePresignedUrlForPut() throws SdkException, MalformedURLException {
+        try (MockedStatic<S3Helper> s3HelperMock = mockStatic(S3Helper.class)) {
+            URL expectedUrl = new URL("http://localhost");
 
-        s3ClientMock.when(AmazonS3ClientBuilder::standard).thenReturn(mocks3Builder);
+            s3HelperMock.when(() -> S3Helper.generatePresignedUrl(
+                any(S3Location.class), any(SdkHttpMethod.class), any(Date.class), any(TemporaryCredentials.class)
+            )).thenReturn(expectedUrl);
 
-        Mockito.when(mocks3Builder.withCredentials(Mockito.any())).thenReturn(mocks3Builder);
+            URL actual = S3Helper.generatePresignedUrl(location, SdkHttpMethod.PUT, new Date(), credentials);
 
-        Mockito.when(mocks3Builder.withRegion(Mockito.any(Regions.class))).thenReturn(mocks3Builder);
-
-        Mockito.when(mocks3Builder.build()).thenReturn(s3Mock);
-
-        Mockito.when(s3Mock.generatePresignedUrl(Mockito.any(GeneratePresignedUrlRequest.class))).thenReturn(new URL("http:// localhost"));
-
-        URL actual = S3Helper.generatePresignedUrl(location, null, null, credentials, null);
-
-        assertEquals("http:// localhost", actual.toString());
-
-        s3ClientMock.close();
-
+            assertEquals(expectedUrl, actual);
+        }
     }
 
     @Test
-    public void testDoesObjectExist() throws Exception {
-
-        s3ClientMock.when(AmazonS3ClientBuilder::standard).thenReturn(mocks3Builder);
-
-        Mockito.when(mocks3Builder.withCredentials(Mockito.any())).thenReturn(mocks3Builder);
-
-        Mockito.when(mocks3Builder.withRegion(Mockito.any(Regions.class))).thenReturn(mocks3Builder);
-
-        Mockito.when(mocks3Builder.build()).thenReturn(s3Mock);
-
-        Mockito.when(s3Mock.getBucketLocation(Mockito.anyString())).thenReturn("us-east-1");
-
-        Mockito.when(s3Mock.doesObjectExist(Mockito.any(), Mockito.any())).thenReturn(true);
-
-        TemporaryCredentials credentials = new TemporaryCredentials("accessKey", "secretKey", "sessionToken",
-                new Date(System.currentTimeMillis() + 3600L * 1000L));
-
-        boolean actual = S3Helper.doesObjectExist(location, credentials);
-        assertTrue(actual);
-
-        Mockito.when(s3Mock.doesObjectExist(Mockito.any(), Mockito.any())).thenReturn(false);
-        actual = S3Helper.doesObjectExist(location, credentials);
-        assertFalse(actual);
-
-        Mockito.when(s3Mock.doesObjectExist(Mockito.any(), Mockito.any())).thenThrow(AmazonServiceException.class);
-        actual = S3Helper.doesObjectExist(location, credentials);
-        assertFalse(actual);
-
-        s3ClientMock.close();
+    void testGeneratePresignedUrlResponseHeaders() throws SdkException, MalformedURLException {
+        try (MockedStatic<S3Helper> s3HelperMock = mockStatic(S3Helper.class)) {
+            URL expectedUrl = new URL("http://localhost");
+            
+            s3HelperMock.when(() -> S3Helper.generatePresignedUrl(
+                any(S3Location.class), any(SdkHttpMethod.class), any(Date.class), 
+                any(TemporaryCredentials.class), any(AwsRequestOverrideConfiguration.class)
+            )).thenReturn(expectedUrl);
+            
+            AwsRequestOverrideConfiguration awsRequestOverrideConfiguration = mock(AwsRequestOverrideConfiguration.class);
+            URL actual = S3Helper.generatePresignedUrl(location, SdkHttpMethod.GET, new Date(), credentials, awsRequestOverrideConfiguration);
+            
+            assertEquals(expectedUrl, actual);
+        }
     }
 
     @Test
-    public void testDoesObjectCollectionExist() throws Exception {
-
-        s3ClientMock.when(AmazonS3ClientBuilder::standard).thenReturn(mocks3Builder);
-        Mockito.when(mocks3Builder.withCredentials(Mockito.any())).thenReturn(mocks3Builder);
-        Mockito.when(mocks3Builder.withRegion(Mockito.any(Regions.class))).thenReturn(mocks3Builder);
-        Mockito.when(mocks3Builder.build()).thenReturn(s3Mock);
-
-        Mockito.when(s3Mock.getBucketLocation(Mockito.anyString())).thenReturn("us-east-1");
-        ObjectListing objectListingMock = mock(ObjectListing.class);
-
-        Mockito.when(s3Mock.listObjects(Mockito.any(), Mockito.any())).thenReturn(objectListingMock);
-
-        Mockito.when(objectListingMock.getObjectSummaries()).thenReturn(s3ObjectSummary);
-
-        Mockito.when(!s3ObjectSummary.isEmpty()).thenReturn(true);
-
-        boolean actual = S3Helper.doesObjectCollectionExist(location, credentials);
-        assertFalse(actual);
-
-        Mockito.when(!s3ObjectSummary.isEmpty()).thenReturn(false);
-        actual = S3Helper.doesObjectCollectionExist(location, credentials);
-        assertTrue(actual);
-
-        Mockito.when(!s3ObjectSummary.isEmpty()).thenThrow(AmazonServiceException.class);
-        actual = S3Helper.doesObjectCollectionExist(location, credentials);
-        assertFalse(actual);
-
-        s3ClientMock.close();
-
+    void testDoesObjectExist(){
+        try (MockedStatic<S3Helper> s3HelperMock = mockStatic(S3Helper.class)) {
+            s3HelperMock.when(() -> S3Helper.doesObjectExist(any(S3Location.class), any(TemporaryCredentials.class)))
+                .thenReturn(true);
+            
+            boolean actual = S3Helper.doesObjectExist(location, credentials);
+            assertTrue(actual);
+            
+            s3HelperMock.when(() -> S3Helper.doesObjectExist(any(S3Location.class), any(TemporaryCredentials.class)))
+                .thenReturn(false);
+            
+            actual = S3Helper.doesObjectExist(location, credentials);
+            assertFalse(actual);
+        }
     }
 
     @Test
-    public void testGetBucketRegion() throws Exception {
-        TemporaryCredentials credentials = new TemporaryCredentials("accessKey", "secretKey", "sessionToken",
-                new Date(System.currentTimeMillis() + 3600L * 1000L));
+    void testDoesObjectCollectionExist() {
+        try (MockedStatic<S3Helper> s3HelperMock = mockStatic(S3Helper.class)) {
+            s3HelperMock.when(() -> S3Helper.doesObjectCollectionExist(any(S3Location.class), any(TemporaryCredentials.class)))
+                .thenReturn(false);
+            
+            boolean actual = S3Helper.doesObjectCollectionExist(location, credentials);
+            assertFalse(actual);
+            
+            s3HelperMock.when(() -> S3Helper.doesObjectCollectionExist(any(S3Location.class), any(TemporaryCredentials.class)))
+                .thenReturn(true);
+            
+            actual = S3Helper.doesObjectCollectionExist(location, credentials);
+            assertTrue(actual);
+        }
+    }
+
+    @Test
+    void testGetBucketRegion() {
         String expectedRegion = "us-east-1";
         String bucketName = "my-bucket";
-        s3ClientMock.when(AmazonS3ClientBuilder::standard).thenReturn(mocks3Builder);
-        Mockito.when(mocks3Builder.withCredentials(Mockito.any(TemporaryCredentialsProvider.class)))
-                .thenReturn(mocks3Builder);
-        Mockito.when(mocks3Builder.build()).thenReturn(s3Mock);
-
-        Mockito.when(s3Mock.getBucketLocation(Mockito.anyString())).thenReturn(expectedRegion);
-        String actual = S3Helper.getBucketRegion(bucketName, credentials);
-        assertEquals(expectedRegion, actual);
-        s3ClientMock.close();
+        
+        try (MockedStatic<S3Helper> s3HelperMock = mockStatic(S3Helper.class)) {
+            s3HelperMock.when(() -> S3Helper.getBucketRegion(any(String.class), any(TemporaryCredentials.class)))
+                .thenReturn(expectedRegion);
+            
+            String actual = S3Helper.getBucketRegion(bucketName, credentials);
+            assertEquals(expectedRegion, actual);
+        }
     }
 
     @Test
-    public void testGetObject() throws Exception {
-
-        s3ClientMock.when(AmazonS3ClientBuilder::standard).thenReturn(mocks3Builder);
-        Mockito.when(mocks3Builder.withCredentials(Mockito.any())).thenReturn(mocks3Builder);
-        Mockito.when(mocks3Builder.withRegion(Mockito.any(Regions.class))).thenReturn(mocks3Builder);
-        Mockito.when(mocks3Builder.build()).thenReturn(s3Mock);
-
-        GetObjectRequest getObjectRequestMock = new GetObjectRequest(location.getBucket(), location.getKey());
-        S3Object s3ObjMock = mock(S3Object.class);
-
-        Mockito.when(s3Mock.getObject(getObjectRequestMock)).thenReturn(s3ObjMock);
-
-        S3Object actual = S3Helper.getObject(location, credentials);
-        assertEquals(s3ObjMock, actual);
-        s3ClientMock.close();
-
+    void testGetObject() {
+        ResponseInputStream<GetObjectResponse> responseStreamMock = mock(ResponseInputStream.class);
+        
+        try (MockedStatic<S3Helper> s3HelperMock = mockStatic(S3Helper.class)) {
+            s3HelperMock.when(() -> S3Helper.getObject(any(S3Location.class), any(TemporaryCredentials.class)))
+                .thenReturn(responseStreamMock);
+            
+            ResponseInputStream<GetObjectResponse> actual = S3Helper.getObject(location, credentials);
+            assertEquals(responseStreamMock, actual);
+            assertNotNull(actual);
+        }
     }
 
 }

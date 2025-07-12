@@ -16,6 +16,7 @@
 
 package org.opengroup.osdu.file.impl.status;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -26,13 +27,13 @@ import static org.mockito.Mockito.when;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.opengroup.osdu.core.aws.sns.AmazonSNSConfig;
-import org.opengroup.osdu.core.aws.ssm.K8sLocalParameterProvider;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.opengroup.osdu.core.aws.v2.sns.AmazonSNSConfig;
+import org.opengroup.osdu.core.aws.v2.ssm.K8sLocalParameterProvider;
 import org.opengroup.osdu.core.common.exception.CoreException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.core.common.model.status.Message;
@@ -40,20 +41,19 @@ import org.opengroup.osdu.core.common.model.status.StatusDetails;
 import org.opengroup.osdu.file.provider.aws.config.ProviderConfigurationBag;
 import org.opengroup.osdu.file.provider.aws.impl.status.StatusEventPublisherImpl;
 
-import com.amazonaws.services.sns.AmazonSNS;
-import com.amazonaws.services.sns.model.PublishRequest;
+import software.amazon.awssdk.services.sns.SnsClient;
+import software.amazon.awssdk.services.sns.model.PublishRequest;
 
-@RunWith(MockitoJUnitRunner.class)
-
-public class StatusEventPublisherImplTest {
+@ExtendWith(MockitoExtension.class)
+class StatusEventPublisherImplTest {
 
     private final String amazonSnsTopic = "amazonSnsTopic";
     private final String region = "us-east-1";
 
 
-    @Test(expected = CoreException.class)
-    public void testPublish_invalidMessages() {
-        AmazonSNS snsClient = mock(AmazonSNS.class);
+    @Test
+    void testPublish_invalidMessages() {
+        SnsClient snsClient = mock(SnsClient.class);
 
         try (MockedConstruction<K8sLocalParameterProvider> provider = Mockito.mockConstruction(K8sLocalParameterProvider.class, (mock, context) -> {
             when(mock.getParameterAsStringOrDefault(anyString(), any())).thenReturn(amazonSnsTopic);
@@ -64,19 +64,23 @@ public class StatusEventPublisherImplTest {
 
                         Message[] messages = new Message[0];
                         Map<String, String> attributesMap = new HashMap<String, String>();
+                        attributesMap.put("data-partition-id", "osdu");
+                        attributesMap.put(DpsHeaders.CORRELATION_ID, DpsHeaders.CORRELATION_ID);
                         ProviderConfigurationBag providerConfigurationBag = new ProviderConfigurationBag();
                         providerConfigurationBag.amazonSnsRegion = region;
 
                         StatusEventPublisherImpl publisher = new StatusEventPublisherImpl(providerConfigurationBag);
+                    assertThrows(CoreException.class, () -> {
                         publisher.publish(messages, attributesMap);
+                    });
                     }
 
             }
     }
 
-    @Test(expected = CoreException.class)
-    public void testPublish_emptyAttributes() {
-        AmazonSNS snsClient = mock(AmazonSNS.class);
+    @Test
+    void testPublish_emptyAttributes() {
+        SnsClient snsClient = mock(SnsClient.class);
 
         try (MockedConstruction<K8sLocalParameterProvider> provider = Mockito.mockConstruction(K8sLocalParameterProvider.class, (mock, context) -> {
             when(mock.getParameterAsStringOrDefault(anyString(), any())).thenReturn(amazonSnsTopic);
@@ -92,15 +96,17 @@ public class StatusEventPublisherImplTest {
                         providerConfigurationBag.amazonSnsRegion = region;
 
                         StatusEventPublisherImpl publisher = new StatusEventPublisherImpl(providerConfigurationBag);
-                        publisher.publish(messages, attributesMap);
+                        assertThrows(CoreException.class, () -> {
+                            publisher.publish(messages, attributesMap);
+                        });
                     }
 
             }
     }
 
-    @Test(expected = CoreException.class)
-    public void testPublish_noPartitionID() {
-        AmazonSNS snsClient = mock(AmazonSNS.class);
+    @Test
+    void testPublish_noPartitionID() {
+        SnsClient snsClient = mock(SnsClient.class);
 
         try (MockedConstruction<K8sLocalParameterProvider> provider = Mockito.mockConstruction(K8sLocalParameterProvider.class, (mock, context) -> {
             when(mock.getParameterAsStringOrDefault(anyString(), any())).thenReturn(amazonSnsTopic);
@@ -117,15 +123,17 @@ public class StatusEventPublisherImplTest {
                         providerConfigurationBag.amazonSnsRegion = region;
 
                         StatusEventPublisherImpl publisher = new StatusEventPublisherImpl(providerConfigurationBag);
-                        publisher.publish(messages, attributesMap);
+                        assertThrows(CoreException.class, () -> {
+                            publisher.publish(messages, attributesMap);
+                        });
                     }
 
             }
     }
 
-    @Test(expected = CoreException.class)
-    public void testPublish_noCorrelationId() {
-        AmazonSNS snsClient = mock(AmazonSNS.class);
+    @Test
+    void testPublish_noCorrelationId() {
+        SnsClient snsClient = mock(SnsClient.class);
 
         try (MockedConstruction<K8sLocalParameterProvider> provider = Mockito.mockConstruction(K8sLocalParameterProvider.class, (mock, context) -> {
             when(mock.getParameterAsStringOrDefault(anyString(), any())).thenReturn(amazonSnsTopic);
@@ -142,16 +150,18 @@ public class StatusEventPublisherImplTest {
                         providerConfigurationBag.amazonSnsRegion = region;
 
                         StatusEventPublisherImpl publisher = new StatusEventPublisherImpl(providerConfigurationBag);
-                        publisher.publish(messages, attributesMap);
+                        assertThrows(CoreException.class, () -> {
+                            publisher.publish(messages, attributesMap);
+                        });
                     }
 
             }
     }
 
     @Test
-    public void testPublish() {
+    void testPublish() {
 
-        AmazonSNS snsClient = mock(AmazonSNS.class);
+        SnsClient snsClient = mock(SnsClient.class);
 
         try (MockedConstruction<K8sLocalParameterProvider> provider = Mockito.mockConstruction(K8sLocalParameterProvider.class, (mock, context) -> {
             when(mock.getParameterAsStringOrDefault(anyString(), any())).thenReturn(amazonSnsTopic);

@@ -19,7 +19,7 @@ package org.opengroup.osdu.file.provider.aws.service;
 import org.opengroup.osdu.file.provider.aws.model.ProviderLocation;
 import org.opengroup.osdu.file.provider.aws.model.S3Location;
 
-import com.amazonaws.services.s3.model.ResponseHeaderOverrides;
+import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration;
 
 import java.time.Duration;
 
@@ -29,7 +29,7 @@ public interface FileLocationProvider {
 
     ProviderLocation getRetrievalFileLocation(S3Location unsignedLocation, Duration expirationDuration);
     
-    ProviderLocation getRetrievalFileLocation(S3Location unsignedLocation, Duration expirationDuration, ResponseHeaderOverrides responseHeaderOverrides);
+    ProviderLocation getRetrievalFileLocation(S3Location unsignedLocation, Duration expirationDuration, AwsRequestOverrideConfiguration requestOverrideConfiguration);
 
     ProviderLocation getFileCollectionUploadLocation(String datasetID, String partitionID);
 

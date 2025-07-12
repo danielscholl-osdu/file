@@ -18,17 +18,36 @@ package org.opengroup.osdu.file.provider.aws.datamodel.coverter;
 
 import java.util.Date;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTypeConverter;
+import software.amazon.awssdk.enhanced.dynamodb.AttributeConverter;
+import software.amazon.awssdk.enhanced.dynamodb.AttributeValueType;
+import software.amazon.awssdk.enhanced.dynamodb.EnhancedType;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
-public class DateToEpochTypeConverter implements DynamoDBTypeConverter<Long, Date> {
+public class DateToEpochTypeConverter implements AttributeConverter<Date> {
 
     @Override
-    public Long convert(Date date) {
-        return date.getTime();
+    public AttributeValue transformFrom(Date date) {
+        if (date == null) {
+            return AttributeValue.builder().nul(true).build();
+        }
+        return AttributeValue.builder().n(String.valueOf(date.getTime())).build();
     }
 
     @Override
-    public Date unconvert(Long l) {
-        return new Date(l);
+    public Date transformTo(AttributeValue attributeValue) {
+        if (attributeValue == null || Boolean.TRUE.equals(attributeValue.nul())) {
+            return null;
+        }
+        return new Date(Long.parseLong(attributeValue.n()));
+    }
+
+    @Override
+    public EnhancedType<Date> type() {
+        return EnhancedType.of(Date.class);
+    }
+
+    @Override
+    public AttributeValueType attributeValueType() {
+        return AttributeValueType.N;
     }
 }

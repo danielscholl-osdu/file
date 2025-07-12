@@ -20,16 +20,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengroup.osdu.file.provider.aws.model.S3Location;
 
 @ExtendWith(MockitoExtension.class)
-public class S3LocationTest {
+class S3LocationTest {
 
     @Test
-    public void shouldCreateWithValidS3Uri() {
+    void shouldCreateWithValidS3Uri() {
         String uri = "s3://bucket/key/file";
         S3Location fileLocation = S3Location.of(uri);
 
@@ -39,7 +39,7 @@ public class S3LocationTest {
     }
 
     @Test
-    public void shouldBeInValid() {
+    void shouldBeInValid() {
         // With Out KeyPath
         String uri = "s3://bucket";
         S3Location fileLocation = S3Location.of(uri);
@@ -57,14 +57,14 @@ public class S3LocationTest {
     }
 
     @Test
-    public void shouldGetCorrectString() {
+    void shouldGetCorrectString() {
         assertEquals("s3://bucket/key/file", S3Location.of("s3://bucket/key/file").toString());
 
         assertEquals("", S3Location.of("").toString());
     }
 
     @Test
-    public void shouldHandleBucketWithPrefixAnWithoutPrefix() {
+    void shouldHandleBucketWithPrefixAnWithoutPrefix() {
         S3Location locationForBucketWithoutPrefix = S3Location.newBuilder().withBucket("abc")
                                                               .withFolder("def")
                                                               .build();
@@ -79,7 +79,7 @@ public class S3LocationTest {
     }
 
     @Test
-    public void shouldBuildFile() {
+    void shouldBuildFile() {
         S3Location location = S3Location.newBuilder().withBucket("abc")
                                         .withFolder("def")
                                         .withFile("123.txt")
@@ -87,12 +87,12 @@ public class S3LocationTest {
                                         .withFile("789.txt")
                                         .build();
 
-        assertTrue(!location.isFolder());
+        assertFalse(location.isFolder());
         assertEquals("s3://abc/def/123.txt/456/789.txt", location.toString());
     }
 
     @Test
-    public void shouldBuildFolder() {
+    void shouldBuildFolder() {
         S3Location location = S3Location.newBuilder().withBucket("abc")
                                         .withFolder("def")
                                         .withFolder("123")

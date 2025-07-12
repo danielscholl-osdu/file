@@ -16,34 +16,38 @@
 
 package org.opengroup.osdu.file.helper;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Calendar;
 import java.util.Date;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.opengroup.osdu.core.aws.sts.STSConfig;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.opengroup.osdu.core.aws.v2.sts.STSConfig;
 import org.opengroup.osdu.file.exception.OsduBadRequestException;
 import org.opengroup.osdu.file.provider.aws.config.ProviderConfigurationBag;
 import org.opengroup.osdu.file.provider.aws.helper.StsCredentialsHelper;
 import org.opengroup.osdu.file.provider.aws.model.S3Location;
 
-import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
-import com.amazonaws.services.securitytoken.model.AssumeRoleRequest;
-import com.amazonaws.services.securitytoken.model.AssumeRoleResult;
-import com.amazonaws.services.securitytoken.model.Credentials;
-import com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceException;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import software.amazon.awssdk.services.sts.model.AssumeRoleResponse;
+import software.amazon.awssdk.services.sts.model.Credentials;
+import software.amazon.awssdk.services.sts.model.StsException;
 
-public class StsCredentialsHelperTest {
+@ExtendWith(MockitoExtension.class)
+class StsCredentialsHelperTest {
 
     private static final String TEST_REGION = "us-east-1";
     private static final String TEST_BUCKET = "XXXXXX";
@@ -52,31 +56,34 @@ public class StsCredentialsHelperTest {
     private static final Date TEST_EXPIRATION = new Date(2040, Calendar.JANUARY, 1, 1, 0, 0);
 
     @Mock
-    private AWSSecurityTokenService securityTokenService;
+    private StsClient securityTokenService;
 
     @Mock
-    private AssumeRoleResult assumeRoleResult;
+    private AssumeRoleResponse assumeRoleResponse;
 
-    @Mock
     private Credentials credentials;
 
     private ProviderConfigurationBag providerConfigurationBag;
     private StsCredentialsHelper stsCredentialsHelper;
 
-    @Before
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
-
+    @BeforeEach
+    void setUp() {
         providerConfigurationBag = new ProviderConfigurationBag();
         providerConfigurationBag.amazonRegion = TEST_REGION;
 
         // Setup default mock behavior
-        when(assumeRoleResult.getCredentials()).thenReturn(credentials);
-        when(securityTokenService.assumeRole(any(AssumeRoleRequest.class))).thenReturn(assumeRoleResult);
+        credentials = Credentials.builder()
+            .accessKeyId("accessKeyId")
+            .secretAccessKey("secretAccessKey")
+            .sessionToken("sessionToken")
+            .expiration(TEST_EXPIRATION.toInstant())
+            .build();
+        lenient().when(assumeRoleResponse.credentials()).thenReturn(credentials);
+        lenient().when(securityTokenService.assumeRole(any(AssumeRoleRequest.class))).thenReturn(assumeRoleResponse);
     }
 
     @Test
-    public void shouldGetUploadCredentials_WhenValidParametersProvided() {
+    void shouldGetUploadCredentials_WhenValidParametersProvided() {
         // Arrange
         try (MockedConstruction<STSConfig> config = Mockito.mockConstruction(STSConfig.class,
             (mock, context) -> when(mock.amazonSTS()).thenReturn(securityTokenService))) {
@@ -88,17 +95,36 @@ public class StsCredentialsHelperTest {
             Object result = stsCredentialsHelper.getUploadCredentials(s3Location, TEST_ROLE_ARN, TEST_EXPIRATION);
 
             // Assert
-            assertNotNull("Upload credentials should not be null", result);
+            assertNotNull(result, "Upload credentials should not be null");
             verify(securityTokenService).assumeRole(any(AssumeRoleRequest.class));
-            verify(assumeRoleResult).getCredentials();
+            verify(assumeRoleResponse).credentials();
         }
     }
 
-    @Test(expected = OsduBadRequestException.class)
-    public void shouldThrowRuntimeException_WhenSecurityTokenServiceFails() {
+    @Test
+    void shouldGetRetrievalCredentials_WhenValidParametersProvided() {
+        // Arrange
+        try (MockedConstruction<STSConfig> config = Mockito.mockConstruction(STSConfig.class,
+                                                                             (mock, context) -> when(mock.amazonSTS()).thenReturn(securityTokenService))) {
+
+            stsCredentialsHelper = new StsCredentialsHelper(providerConfigurationBag);
+            S3Location s3Location = new S3Location(TEST_BUCKET, TEST_KEY);
+
+            // Act
+            Object result = stsCredentialsHelper.getRetrievalCredentials(s3Location, TEST_ROLE_ARN, TEST_EXPIRATION);
+
+            // Assert
+            assertNotNull(result, "Retrieval credentials should not be null");
+            verify(securityTokenService).assumeRole(any(AssumeRoleRequest.class));
+            verify(assumeRoleResponse).credentials();
+        }
+    }
+
+    @Test
+    void shouldThrowRuntimeException_WhenSecurityTokenServiceFails() {
         // Arrange
         when(securityTokenService.assumeRole(any(AssumeRoleRequest.class)))
-            .thenThrow(new AWSSecurityTokenServiceException("Failed to assume role"));
+            .thenThrow(StsException.builder().message("Failed to assume role").build());
 
         try (MockedConstruction<STSConfig> config = Mockito.mockConstruction(STSConfig.class,
             (mock, context) -> when(mock.amazonSTS()).thenReturn(securityTokenService))) {
@@ -106,13 +132,15 @@ public class StsCredentialsHelperTest {
             stsCredentialsHelper = new StsCredentialsHelper(providerConfigurationBag);
             S3Location s3Location = new S3Location(TEST_BUCKET, TEST_KEY);
 
-            // Act
-            stsCredentialsHelper.getUploadCredentials(s3Location, TEST_ROLE_ARN, TEST_EXPIRATION);
+            // Act & Assert
+            assertThrows(OsduBadRequestException.class, () -> {
+                stsCredentialsHelper.getUploadCredentials(s3Location, TEST_ROLE_ARN, TEST_EXPIRATION);
+            });
         }
     }
 
     @Test
-    public void shouldRoundUpToOneMinute_WhenDurationIsLessThanOneMinute() {
+    void shouldRoundUpToOneMinute_WhenDurationIsLessThanOneMinute() {
         // Arrange
         try (MockedConstruction<STSConfig> config = Mockito.mockConstruction(STSConfig.class,
             (mock, context) -> when(mock.amazonSTS()).thenReturn(securityTokenService))) {
@@ -128,8 +156,8 @@ public class StsCredentialsHelperTest {
             stsCredentialsHelper.getUploadCredentials(s3Location, TEST_ROLE_ARN, expiration);
 
             // Assert
-            verify(securityTokenService).assumeRole(argThat(request ->
-                request.getDurationSeconds() == 60));
+            verify(securityTokenService).assumeRole(argThat((AssumeRoleRequest request) ->
+                request.durationSeconds() == 60));
         }
     }
 }
