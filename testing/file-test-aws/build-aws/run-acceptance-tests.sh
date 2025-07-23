@@ -27,7 +27,7 @@ export TEST_OPENID_PROVIDER_CLIENT_ID="integration-tester"
 export PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_ID="${TEST_OPENID_PROVIDER_CLIENT_ID}"
 export TEST_OPENID_PROVIDER_URL="https://keycloak.$CIMPL_DOMAIN/realms/osdu"
 export PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_SECRET="${CIMPL_OPENID_PROVIDER_CLIENT_SECRET}"
-export INTEGRATION_TESTER_EMAIL="${AWS_COGNITO_AUTH_PARAMS_USER}"
+export INTEGRATION_TESTER_EMAIL="${AWS_IDP_AUTH_PARAMS_USER}"
 
 export STORAGE_HOST="${AWS_BASE_URL}/api/storage/v2/"
 export FILE_SERVICE_HOST="${AWS_BASE_URL}/api/file/v2"
@@ -41,10 +41,10 @@ export ENTITLEMENTS_DOMAIN="example.com"
 export LEGAL_TAG="${AWS_LEGAL_TAG}"
 export TEST_OPENID_PROVIDER_CLIENT_SECRET="${CIMPL_OPENID_PROVIDER_CLIENT_SECRET}"
 
-export AWS_COGNITO_AUTH_FLOW="USER_PASSWORD_AUTH"
-export COGNITO_NAME="$(aws ssm get-parameter --name "/osdu/instances/${OSDU_INSTANCE_NAME}/config/cognito/name" --query Parameter.Value --output text --region $AWS_REGION)"
-export AWS_COGNITO_CLIENT_ID="$(aws ssm get-parameter --name "/osdu/cognito/${COGNITO_NAME}/client/id" --query Parameter.Value --output text --region $AWS_REGION)"
-export PRIVILEGED_USER_TOKEN=$(aws cognito-idp initiate-auth --region ${AWS_REGION} --auth-flow ${AWS_COGNITO_AUTH_FLOW} --client-id ${AWS_COGNITO_CLIENT_ID} --auth-parameters USERNAME=${AWS_COGNITO_AUTH_PARAMS_USER},PASSWORD=${AWS_COGNITO_AUTH_PARAMS_PASSWORD} --query AuthenticationResult.AccessToken --output text)
+export AWS_IDP_AUTH_FLOW="USER_PASSWORD_AUTH"
+export IDP_NAME="$(aws ssm get-parameter --name "/osdu/instances/${OSDU_INSTANCE_NAME}/config/idp/name" --query Parameter.Value --output text --region $AWS_REGION)"
+export AWS_IDP_CLIENT_ID="$(aws ssm get-parameter --name "/osdu/idp/${IDP_NAME}/client/id" --query Parameter.Value --output text --region $AWS_REGION)"
+export PRIVILEGED_USER_TOKEN=$(aws cognito-idp initiate-auth --region ${AWS_REGION} --auth-flow ${AWS_IDP_AUTH_FLOW} --client-id ${AWS_IDP_CLIENT_ID} --auth-parameters USERNAME=${AWS_IDP_AUTH_PARAMS_USER},PASSWORD=${AWS_IDP_AUTH_PARAMS_PASSWORD} --query AuthenticationResult.AccessToken --output text)
 export SIGNED_URL_EXPIRY_TIME_MINUTES="15"
 
 # Run the tests
