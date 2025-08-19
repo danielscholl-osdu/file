@@ -12,6 +12,7 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+      actions: write  # Required to update repository variables for state persistence
 
     steps:
       - name: Checkout main (contains workflows and actions)
@@ -375,7 +376,15 @@ jobs:
           echo "PR number: $PR_NUMBER"
           
           # Update sync state with new PR number
-          git config sync.current-pr-number "$PR_NUMBER"
+          gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_CURRENT_PR_NUMBER" \
+            -X PATCH \
+            -f name="SYNC_CURRENT_PR_NUMBER" \
+            -f value="$PR_NUMBER" 2>/dev/null || \
+          gh api "repos/$GITHUB_REPOSITORY/actions/variables" \
+            -X POST \
+            -f name="SYNC_CURRENT_PR_NUMBER" \
+            -f value="$PR_NUMBER" 2>/dev/null || \
+          echo "⚠️ Warning: Could not update SYNC_CURRENT_PR_NUMBER variable"
           
           # Set outputs for next step
           echo "pr-url=$PR_URL" >> $GITHUB_OUTPUT
@@ -478,18 +487,24 @@ jobs:
             --title "⬆️ Sync with upstream $UPSTREAM_VERSION (Updated)" \
             --body "$PR_DESCRIPTION"
           
-          # Add comment to the PR about the update
-          gh pr comment "$PR_NUMBER" --body "🔄 **Sync Updated**
+          # Check for existing "Sync Updated" comments to prevent duplicates
+          EXISTING_COMMENT=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments[] | select(.body | contains("🔄 **Sync Updated**")) | .body' | grep -c "New upstream version.*$UPSTREAM_VERSION" || echo "0")
           
-          The upstream repository has advanced since this PR was created. This branch has been updated with the latest changes from upstream.
-          
-          **New upstream version**: \`$UPSTREAM_VERSION\`
-          **Updated at**: \`$(date -u +%Y-%m-%dT%H:%M:%SZ)\`
-          **PR description**: Regenerated to include all commits (original + new changes)
-          
-          Please review the updated changes and merge when ready."
-          
-          # Note: Comment deduplication now uses existing comment checking rather than git config tracking
+          if [ "$EXISTING_COMMENT" = "0" ]; then
+            # Add comment to the PR about the update
+            gh pr comment "$PR_NUMBER" --body "🔄 **Sync Updated**
+            
+            The upstream repository has advanced since this PR was created. This branch has been updated with the latest changes from upstream.
+            
+            **New upstream version**: \`$UPSTREAM_VERSION\`
+            **Updated at**: \`$(date -u +%Y-%m-%dT%H:%M:%SZ)\`
+            **PR description**: Regenerated to include all commits (original + new changes)
+            
+            Please review the updated changes and merge when ready."
+            echo "✅ Added sync update comment for upstream version $UPSTREAM_VERSION"
+          else
+            echo "ℹ️ Skipping duplicate comment - sync update for $UPSTREAM_VERSION already exists"
+          fi
           
           # Set outputs for consistency
           echo "pr-url=${{ github.server_url }}/${{ github.repository }}/pull/$PR_NUMBER" >> $GITHUB_OUTPUT
@@ -519,7 +534,15 @@ jobs:
           ISSUE_NUMBER=$(basename "$ISSUE_URL")
           
           # Update sync state with new issue number
-          git config sync.current-issue-number "$ISSUE_NUMBER"
+          gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_CURRENT_ISSUE_NUMBER" \
+            -X PATCH \
+            -f name="SYNC_CURRENT_ISSUE_NUMBER" \
+            -f value="$ISSUE_NUMBER" 2>/dev/null || \
+          gh api "repos/$GITHUB_REPOSITORY/actions/variables" \
+            -X POST \
+            -f name="SYNC_CURRENT_ISSUE_NUMBER" \
+            -f value="$ISSUE_NUMBER" 2>/dev/null || \
+          echo "⚠️ Warning: Could not update SYNC_CURRENT_ISSUE_NUMBER variable"
           
           # Build notification body with the actual issue number
           printf -v NOTIFICATION_BODY '%s\n\n%s\n\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n%s\n\n%s\n\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n%s\n%s' \

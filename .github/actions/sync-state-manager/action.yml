@@ -50,12 +50,17 @@ runs:
     - name: "Check stored sync state"
       id: stored_state
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
       run: |
-        # Get stored state from git config
-        LAST_UPSTREAM_SHA=$(git config --get sync.last-upstream-sha || echo "")
-        CURRENT_PR_NUMBER=$(git config --get sync.current-pr-number || echo "")
-        CURRENT_ISSUE_NUMBER=$(git config --get sync.current-issue-number || echo "")
-        LAST_SYNC_TIMESTAMP=$(git config --get sync.last-sync-timestamp || echo "")
+        # Get stored state from GitHub repository variables
+        echo "Fetching sync state from repository variables..."
+        
+        # Get variables with error handling
+        LAST_UPSTREAM_SHA=$(gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_LAST_UPSTREAM_SHA" --jq '.value' 2>/dev/null || echo "")
+        CURRENT_PR_NUMBER=$(gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_CURRENT_PR_NUMBER" --jq '.value' 2>/dev/null || echo "")
+        CURRENT_ISSUE_NUMBER=$(gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_CURRENT_ISSUE_NUMBER" --jq '.value' 2>/dev/null || echo "")
+        LAST_SYNC_TIMESTAMP=$(gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_LAST_TIMESTAMP" --jq '.value' 2>/dev/null || echo "")
         
         echo "last_upstream_sha=$LAST_UPSTREAM_SHA" >> $GITHUB_OUTPUT
         echo "current_pr_number=$CURRENT_PR_NUMBER" >> $GITHUB_OUTPUT
@@ -247,13 +252,35 @@ runs:
     - name: "Update sync state"
       id: update_state
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
       run: |
-        # Update stored state
+        # Update stored state in GitHub repository variables
         UPSTREAM_SHA="${{ steps.upstream_sha.outputs.upstream_sha }}"
         CURRENT_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
         
-        git config sync.last-upstream-sha "$UPSTREAM_SHA"
-        git config sync.last-sync-timestamp "$CURRENT_TIMESTAMP"
+        echo "Updating sync state in repository variables..."
+        
+        # Update upstream SHA and timestamp
+        gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_LAST_UPSTREAM_SHA" \
+          -X PATCH \
+          -f name="SYNC_LAST_UPSTREAM_SHA" \
+          -f value="$UPSTREAM_SHA" 2>/dev/null || \
+        gh api "repos/$GITHUB_REPOSITORY/actions/variables" \
+          -X POST \
+          -f name="SYNC_LAST_UPSTREAM_SHA" \
+          -f value="$UPSTREAM_SHA" 2>/dev/null || \
+        echo "⚠️ Warning: Could not update SYNC_LAST_UPSTREAM_SHA variable"
+        
+        gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_LAST_TIMESTAMP" \
+          -X PATCH \
+          -f name="SYNC_LAST_TIMESTAMP" \
+          -f value="$CURRENT_TIMESTAMP" 2>/dev/null || \
+        gh api "repos/$GITHUB_REPOSITORY/actions/variables" \
+          -X POST \
+          -f name="SYNC_LAST_TIMESTAMP" \
+          -f value="$CURRENT_TIMESTAMP" 2>/dev/null || \
+        echo "⚠️ Warning: Could not update SYNC_LAST_TIMESTAMP variable"
         
         # Update PR and issue numbers if creating new ones
         if [ "${{ steps.decision.outputs.should_create_pr }}" = "true" ]; then
