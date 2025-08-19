@@ -53,24 +53,43 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
       run: |
-        # Get stored state from GitHub repository variables
-        echo "Fetching sync state from repository variables..."
+        # Get stored state by parsing existing issue description
+        echo "Reading sync state from existing issue description..."
         
-        # Get variables with error handling
-        LAST_UPSTREAM_SHA=$(gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_LAST_UPSTREAM_SHA" --jq '.value' 2>/dev/null || echo "")
-        CURRENT_PR_NUMBER=$(gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_CURRENT_PR_NUMBER" --jq '.value' 2>/dev/null || echo "")
-        CURRENT_ISSUE_NUMBER=$(gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_CURRENT_ISSUE_NUMBER" --jq '.value' 2>/dev/null || echo "")
-        LAST_SYNC_TIMESTAMP=$(gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_LAST_TIMESTAMP" --jq '.value' 2>/dev/null || echo "")
+        # First detect if we have existing sync issues
+        EXISTING_ISSUE_NUMBER="${{ steps.existing_issues.outputs.existing_issue_number }}"
         
+        if [ -n "$EXISTING_ISSUE_NUMBER" ]; then
+          echo "Found existing issue #$EXISTING_ISSUE_NUMBER, parsing state from description..."
+          
+          # Get issue body and extract upstream version SHA
+          ISSUE_BODY=$(gh issue view "$EXISTING_ISSUE_NUMBER" --json body --jq '.body')
+          
+          # Extract SHA from "Upstream Version" field using awk for robust parsing
+          LAST_UPSTREAM_SHA=$(echo "$ISSUE_BODY" | awk '/Upstream Version/ {match($0, /`[^`]+`/); if (RSTART > 0) print substr($0, RSTART+1, RLENGTH-2)}' | head -1)
+          
+          # Extract timestamp from issue creation/update
+          LAST_SYNC_TIMESTAMP=$(gh issue view "$EXISTING_ISSUE_NUMBER" --json updatedAt --jq '.updatedAt')
+          
+          echo "Parsed from issue:"
+          echo "  Last upstream SHA: $LAST_UPSTREAM_SHA"
+          echo "  Issue number: $EXISTING_ISSUE_NUMBER"
+          echo "  Last sync: $LAST_SYNC_TIMESTAMP"
+        else
+          echo "No existing sync issue found, treating as first sync"
+          LAST_UPSTREAM_SHA=""
+          LAST_SYNC_TIMESTAMP=""
+        fi
+        
+        # Set outputs for decision logic
         echo "last_upstream_sha=$LAST_UPSTREAM_SHA" >> $GITHUB_OUTPUT
-        echo "current_pr_number=$CURRENT_PR_NUMBER" >> $GITHUB_OUTPUT
-        echo "current_issue_number=$CURRENT_ISSUE_NUMBER" >> $GITHUB_OUTPUT
+        echo "current_pr_number=" >> $GITHUB_OUTPUT  # Note: This depends on existing_prs step running after this step
+        echo "current_issue_number=$EXISTING_ISSUE_NUMBER" >> $GITHUB_OUTPUT
         echo "last_sync_timestamp=$LAST_SYNC_TIMESTAMP" >> $GITHUB_OUTPUT
         
         echo "Stored state:"
         echo "  Last upstream SHA: $LAST_UPSTREAM_SHA"
-        echo "  Current PR: $CURRENT_PR_NUMBER"
-        echo "  Current issue: $CURRENT_ISSUE_NUMBER"
+        echo "  Current issue: $EXISTING_ISSUE_NUMBER"
         echo "  Last sync: $LAST_SYNC_TIMESTAMP"
 
     - name: "Detect existing sync PRs"
@@ -249,45 +268,3 @@ runs:
           echo "✅ Decision: No action needed (upstream unchanged, no existing PR)"
         fi
 
-    - name: "Update sync state"
-      id: update_state
-      shell: bash
-      env:
-        GITHUB_TOKEN: ${{ inputs.github_token }}
-      run: |
-        # Update stored state in GitHub repository variables
-        UPSTREAM_SHA="${{ steps.upstream_sha.outputs.upstream_sha }}"
-        CURRENT_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-        
-        echo "Updating sync state in repository variables..."
-        
-        # Update upstream SHA and timestamp
-        gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_LAST_UPSTREAM_SHA" \
-          -X PATCH \
-          -f name="SYNC_LAST_UPSTREAM_SHA" \
-          -f value="$UPSTREAM_SHA" 2>/dev/null || \
-        gh api "repos/$GITHUB_REPOSITORY/actions/variables" \
-          -X POST \
-          -f name="SYNC_LAST_UPSTREAM_SHA" \
-          -f value="$UPSTREAM_SHA" 2>/dev/null || \
-        echo "⚠️ Warning: Could not update SYNC_LAST_UPSTREAM_SHA variable"
-        
-        gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_LAST_TIMESTAMP" \
-          -X PATCH \
-          -f name="SYNC_LAST_TIMESTAMP" \
-          -f value="$CURRENT_TIMESTAMP" 2>/dev/null || \
-        gh api "repos/$GITHUB_REPOSITORY/actions/variables" \
-          -X POST \
-          -f name="SYNC_LAST_TIMESTAMP" \
-          -f value="$CURRENT_TIMESTAMP" 2>/dev/null || \
-        echo "⚠️ Warning: Could not update SYNC_LAST_TIMESTAMP variable"
-        
-        # Update PR and issue numbers if creating new ones
-        if [ "${{ steps.decision.outputs.should_create_pr }}" = "true" ]; then
-          # These will be updated by the calling workflow after PR/issue creation
-          echo "State will be updated with new PR/issue numbers by calling workflow"
-        fi
-        
-        echo "✅ Updated sync state:"
-        echo "  Last upstream SHA: $UPSTREAM_SHA"
-        echo "  Last sync timestamp: $CURRENT_TIMESTAMP"

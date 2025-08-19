@@ -12,7 +12,6 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
-      actions: write  # Required to update repository variables for state persistence
 
     steps:
       - name: Checkout main (contains workflows and actions)
@@ -375,16 +374,7 @@ jobs:
           PR_NUMBER=$(basename "$PR_URL")
           echo "PR number: $PR_NUMBER"
           
-          # Update sync state with new PR number
-          gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_CURRENT_PR_NUMBER" \
-            -X PATCH \
-            -f name="SYNC_CURRENT_PR_NUMBER" \
-            -f value="$PR_NUMBER" 2>/dev/null || \
-          gh api "repos/$GITHUB_REPOSITORY/actions/variables" \
-            -X POST \
-            -f name="SYNC_CURRENT_PR_NUMBER" \
-            -f value="$PR_NUMBER" 2>/dev/null || \
-          echo "⚠️ Warning: Could not update SYNC_CURRENT_PR_NUMBER variable"
+          # PR number will be tracked via issue description updates
           
           # Set outputs for next step
           echo "pr-url=$PR_URL" >> $GITHUB_OUTPUT
@@ -533,16 +523,7 @@ jobs:
           # Extract issue number
           ISSUE_NUMBER=$(basename "$ISSUE_URL")
           
-          # Update sync state with new issue number
-          gh api "repos/$GITHUB_REPOSITORY/actions/variables/SYNC_CURRENT_ISSUE_NUMBER" \
-            -X PATCH \
-            -f name="SYNC_CURRENT_ISSUE_NUMBER" \
-            -f value="$ISSUE_NUMBER" 2>/dev/null || \
-          gh api "repos/$GITHUB_REPOSITORY/actions/variables" \
-            -X POST \
-            -f name="SYNC_CURRENT_ISSUE_NUMBER" \
-            -f value="$ISSUE_NUMBER" 2>/dev/null || \
-          echo "⚠️ Warning: Could not update SYNC_CURRENT_ISSUE_NUMBER variable"
+          # Issue state will be maintained by updating the issue description
           
           # Build notification body with the actual issue number
           printf -v NOTIFICATION_BODY '%s\n\n%s\n\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n%s\n\n%s\n\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n%s\n%s' \
