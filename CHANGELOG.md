@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.0.1](https://github.com/danielscholl-osdu/file/compare/v1.0.0...v1.0.1) (2025-08-19)
+
+
+### 🐛 Bug Fixes
+
+* Cve and spring boot version bump ([b2a09e0](https://github.com/danielscholl-osdu/file/commit/b2a09e0ce93dbfa42fb538dbb3476919cd6fc992))
+* Cve and spring boot version bump ([30e713c](https://github.com/danielscholl-osdu/file/commit/30e713c10a9311e722383a0f9d84cd0ddf9fd994))
+
+
+### 🔧 Miscellaneous
+
+* Sync template updates ([daf57dd](https://github.com/danielscholl-osdu/file/commit/daf57ddb6f8ffc8c54a525c0dd56bf94de0a1f6e))
+* Sync template updates ([36b6b0d](https://github.com/danielscholl-osdu/file/commit/36b6b0d930cdc4a2e5d96b4101c017e8c8dfd444))
+
+
+### 🔨 Build System
+
+* Upgrade Spring Boot to 3.3.11 and add acceptance test automation ([bc42647](https://github.com/danielscholl-osdu/file/commit/bc426478777265ec1456276446500c98f5bcf0fa))
+
 ## 1.0.0 (2025-07-21)
 
 
