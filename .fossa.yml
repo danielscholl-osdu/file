@@ -30,7 +30,7 @@ analyze:
       path: .
     - name: file-gcp-datastore
       type: mvn
-      target: provider/file-gc-datastore/pom.xml
+      target: provider/file-gc/pom.xml
       path: .
     - name: file-azure
       type: mvn
