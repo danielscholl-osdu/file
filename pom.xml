@@ -68,7 +68,7 @@
     <org.mapstruct.version>1.5.1.Final</org.mapstruct.version>
     <springfox.version>3.0.0</springfox.version>
     <snakeyaml.version>2.1</snakeyaml.version>
-    <commons-collections4.version>4.4</commons-collections4.version>
+    <commons-collections4.version>4.5.0</commons-collections4.version>
 
     <!-- Plugin Versions -->
     <maven-surefire-plugin.version>3.0.0-M4</maven-surefire-plugin.version>
