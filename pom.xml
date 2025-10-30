@@ -58,7 +58,7 @@
     <spring-security.version>6.3.6</spring-security.version>
 
     <!-- Project Versions-->
-    <json-smart.version>2.5.0</json-smart.version>
+    <json-smart.version>2.6.0</json-smart.version>
     <openapi.version>2.6.0</openapi.version>
     <lombok.version>1.18.30</lombok.version>
     <guava.version>32.0.1-jre</guava.version>
@@ -67,7 +67,7 @@
     <jakarta.inject-api.version>2.0.1</jakarta.inject-api.version>
     <org.mapstruct.version>1.5.1.Final</org.mapstruct.version>
     <springfox.version>3.0.0</springfox.version>
-    <snakeyaml.version>2.1</snakeyaml.version>
+    <snakeyaml.version>2.5</snakeyaml.version>
     <commons-collections4.version>4.4</commons-collections4.version>
 
     <!-- Plugin Versions -->
