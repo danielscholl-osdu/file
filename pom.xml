@@ -52,7 +52,7 @@
     <!--
        Important: spring-boot.version must be the same as the parent version
     -->
-    <spring-boot.version>3.3.11</spring-boot.version>
+    <spring-boot.version>3.5.7</spring-boot.version>
     <spring-cloud.version>2023.0.1</spring-cloud.version>
     <spring-framework-version>6.1.16</spring-framework-version>
     <spring-security.version>6.3.6</spring-security.version>
@@ -60,7 +60,7 @@
     <!-- Project Versions-->
     <json-smart.version>2.5.0</json-smart.version>
     <openapi.version>2.6.0</openapi.version>
-    <lombok.version>1.18.30</lombok.version>
+    <lombok.version>1.18.42</lombok.version>
     <guava.version>32.0.1-jre</guava.version>
     <log4j2.version>2.21.1</log4j2.version>
     <logback.version>1.5.16</logback.version>
