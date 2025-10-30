@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ Copyright 2020 Google LLC
   ~
@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.opengroup.osdu</groupId>
     <artifactId>os-file</artifactId>
-    <version>0.29.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
