@@ -59,7 +59,7 @@
     <junit-jupiter.version>5.10.1</junit-jupiter.version>
     <mockito.version>5.8.0</mockito.version>
     <byte-buddy.version>1.14.11</byte-buddy.version>
-    <jacoco.version>0.8.8</jacoco.version>
+    <jacoco.version>0.8.14</jacoco.version>
 
     <!-- Plugin Dependencies -->
     <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
