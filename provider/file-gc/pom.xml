@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ Copyright 2020-2023 Google LLC
   ~
@@ -26,7 +26,7 @@
   </parent>
 
   <artifactId>file-gc</artifactId>
-  <version>0.29.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>jar</packaging>
 
   <name>file-gc</name>
