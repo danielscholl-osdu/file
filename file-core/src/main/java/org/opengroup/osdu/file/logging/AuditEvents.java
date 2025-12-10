@@ -38,16 +38,18 @@ public class AuditEvents {
 
 
   private final String user;
+  private final String userIpAddress;
+  private final String userAgent;
+  private final String userAuthorizedGroupName;
 
-
-  public AuditEvents(String user) {
-    if (Strings.isNullOrEmpty(user)) {
-      throw new IllegalArgumentException("User not provided for audit events.");
-    }
-    this.user = user;
+  public AuditEvents(String user, String userIpAddress, String userAgent, String userAuthorizedGroupName) {
+    this.user = requireNonEmpty(user, "User not provided for audit events.");
+    this.userIpAddress = requireNonEmpty(userIpAddress, "User's IP address is not provided for audit events.");
+    this.userAgent = requireNonEmpty(userAgent, "User's agent is not provided for audit events.");
+    this.userAuthorizedGroupName = requireNonEmpty(userAuthorizedGroupName, "User's authorized group name is not provided for audit events.");
   }
 
-  public AuditPayload getReadFileLocationEvent(AuditStatus status, List<String> resources) {
+  public AuditPayload getReadFileLocationEvent(AuditStatus status, List<String> resources, List<String> requiredGroupsForAction) {
     return AuditPayload.builder()
         .action(AuditAction.READ)
         .status(status)
@@ -55,10 +57,14 @@ public class AuditEvents {
         .actionId(READ_FILE_LOCATION_ACTION_ID)
         .message(getStatusMessage(status, READ_FILE_LOCATION_MESSAGE))
         .resources(resources)
+        .requiredGroupsForAction(requiredGroupsForAction)
+        .userIpAddress(this.userIpAddress)
+        .userAgent(this.userAgent)
+        .userAuthorizedGroupName(this.userAuthorizedGroupName)
         .build();
   }
 
-  public AuditPayload getReadFileListEvent(AuditStatus status, List<String> resources) {
+  public AuditPayload getReadFileListEvent(AuditStatus status, List<String> resources, List<String> requiredGroupsForAction) {
     return AuditPayload.builder()
         .action(AuditAction.READ)
         .status(status)
@@ -66,10 +72,14 @@ public class AuditEvents {
         .actionId(READ_FILE_LIST_ACTION_ID)
         .message(getStatusMessage(status, READ_FILE_LIST_MESSAGE))
         .resources(resources)
+        .requiredGroupsForAction(requiredGroupsForAction)
+        .userIpAddress(this.userIpAddress)
+        .userAgent(this.userAgent)
+        .userAuthorizedGroupName(this.userAuthorizedGroupName)
         .build();
   }
 
-  public AuditPayload getCreateLocationEvent(AuditStatus status, List<String> resources) {
+  public AuditPayload getCreateLocationEvent(AuditStatus status, List<String> resources, List<String> requiredGroupsForAction) {
     return AuditPayload.builder()
         .action(AuditAction.CREATE)
         .status(status)
@@ -77,10 +87,21 @@ public class AuditEvents {
         .actionId(CREATE_LOCATION_ACTION_ID)
         .message(getStatusMessage(status, CREATE_LOCATION_MESSAGE))
         .resources(resources)
+        .requiredGroupsForAction(requiredGroupsForAction)
+        .userIpAddress(this.userIpAddress)
+        .userAgent(this.userAgent)
+        .userAuthorizedGroupName(this.userAuthorizedGroupName)
         .build();
   }
 
   private String getStatusMessage(AuditStatus status, String message) {
     return format("%s - %s", message, status.name().toLowerCase());
+  }
+
+  private static String requireNonEmpty(String value, String message) {
+    if (Strings.isNullOrEmpty(value)) {
+        throw new IllegalArgumentException(message);
+    }
+    return value;
   }
 }

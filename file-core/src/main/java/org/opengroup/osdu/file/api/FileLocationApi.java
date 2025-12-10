@@ -82,7 +82,7 @@ public class FileLocationApi {
     log.debug("Location request received : {}", request);
     LocationResponse locationResponse = locationService.getLocation(request, headers);
     log.debug("Location result ready : {}", locationResponse);
-    this.auditLogger.createLocationSuccess(Collections.singletonList(locationResponse.toString()));
+    this.auditLogger.createLocationSuccess(Collections.singletonList(locationResponse.toString()), Collections.singletonList(FileServiceRole.EDITORS));
     return locationResponse;
   }
 
@@ -106,7 +106,7 @@ public class FileLocationApi {
     log.debug("File location request received : {}", request);
     FileLocationResponse fileLocationResponse = locationService.getFileLocation(request, headers);
     log.debug("File location result ready : {}", fileLocationResponse);
-    this.auditLogger.readFileLocationSuccess(Collections.singletonList(fileLocationResponse.toString()));
+    this.auditLogger.readFileLocationSuccess(Collections.singletonList(fileLocationResponse.toString()), Collections.singletonList(FileServiceRole.EDITORS));
     return fileLocationResponse;
   }
 
