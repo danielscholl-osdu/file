@@ -49,6 +49,7 @@ public class AuthorizationFilter {
     authenticationService.checkAuthentication(headers.getAuthorization(),headers.getPartitionId());
     AuthorizationResponse authResponse = authorizationService.authorizeAny(headers, requiredRoles);
     headers.put(DpsHeaders.USER_EMAIL, authResponse.getUser());
+    headers.put(DpsHeaders.USER_AUTHORIZED_GROUP_NAME, authResponse.getUserAuthorizedGroupName());
     return true;
   }
 }

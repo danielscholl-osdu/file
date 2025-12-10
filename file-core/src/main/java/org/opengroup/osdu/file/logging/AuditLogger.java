@@ -23,8 +23,12 @@ import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.logging.audit.AuditPayload;
 import org.opengroup.osdu.core.common.logging.audit.AuditStatus;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
+import org.opengroup.osdu.core.common.util.IpAddressUtil;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @Component
 @RequestScope
@@ -33,37 +37,44 @@ public class AuditLogger {
 
   private final JaxRsDpsLog logger;
   private final DpsHeaders headers;
+  private final HttpServletRequest httpRequest;
+
   private AuditEvents events = null;
 
   private AuditEvents getAuditEvents() {
+
+    String userIpAddress = IpAddressUtil.getClientIpAddress(this.httpRequest);
+    String userAgent = httpRequest.getHeader("user-agent");
+
     if (this.events == null) {
-      this.events = new AuditEvents(this.headers.getUserEmail());
+      this.events = new AuditEvents(this.headers.getUserEmail(), userIpAddress, userAgent, this.headers.getUserAuthorizedGroupName());
     }
+
     return this.events;
   }
 
-  public void readFileLocationSuccess(List<String> resources) {
-    writeLog(getAuditEvents().getReadFileLocationEvent(AuditStatus.SUCCESS, resources));
+  public void readFileLocationSuccess(List<String> resources, List<String> requiredGroupsForAction) {
+    writeLog(getAuditEvents().getReadFileLocationEvent(AuditStatus.SUCCESS, resources, requiredGroupsForAction));
   }
 
-  public void readFileLocationFailure(List<String> resources) {
-    writeLog(getAuditEvents().getReadFileLocationEvent(AuditStatus.FAILURE, resources));
+  public void readFileLocationFailure(List<String> resources, List<String> requiredGroupsForAction) {
+    writeLog(getAuditEvents().getReadFileLocationEvent(AuditStatus.FAILURE, resources, requiredGroupsForAction));
   }
 
-  public void readFileListSuccess(List<String> resources) {
-    writeLog(getAuditEvents().getReadFileListEvent(AuditStatus.SUCCESS, resources));
+  public void readFileListSuccess(List<String> resources, List<String> requiredGroupsForAction) {
+    writeLog(getAuditEvents().getReadFileListEvent(AuditStatus.SUCCESS, resources, requiredGroupsForAction));
   }
 
-  public void readFileListFailure(List<String> resources) {
-    writeLog(getAuditEvents().getReadFileListEvent(AuditStatus.FAILURE, resources));
+  public void readFileListFailure(List<String> resources, List<String> requiredGroupsForAction) {
+    writeLog(getAuditEvents().getReadFileListEvent(AuditStatus.FAILURE, resources, requiredGroupsForAction));
   }
 
-  public void createLocationSuccess(List<String> resources) {
-    writeLog(getAuditEvents().getCreateLocationEvent(AuditStatus.SUCCESS, resources));
+  public void createLocationSuccess(List<String> resources, List<String> requiredGroupsForAction) {
+    writeLog(getAuditEvents().getCreateLocationEvent(AuditStatus.SUCCESS, resources, requiredGroupsForAction));
   }
 
-  public void createLocationFailure(List<String> resources) {
-    writeLog(getAuditEvents().getCreateLocationEvent(AuditStatus.FAILURE, resources));
+  public void createLocationFailure(List<String> resources, List<String> requiredGroupsForAction) {
+    writeLog(getAuditEvents().getCreateLocationEvent(AuditStatus.FAILURE, resources, requiredGroupsForAction));
   }
 
   private void writeLog(AuditPayload log) {

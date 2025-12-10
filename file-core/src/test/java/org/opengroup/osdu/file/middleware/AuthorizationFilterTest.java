@@ -69,5 +69,6 @@ public class AuthorizationFilterTest {
     verify(headers, times(1)).getPartitionId();
     verify(authorizationService, times(1)).authorizeAny(headers, roles);
     verify(authorizationResponse, times(1)).getUser();
+    verify(authorizationResponse, times(1)).getUserAuthorizedGroupName();
   }
 }

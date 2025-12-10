@@ -74,7 +74,7 @@ public class FileListApi {
     log.debug("File list request received : {}", request);
     FileListResponse fileListResponse = fileListService.getFileList(request, headers);
     log.debug("File list result ready : {}", fileListResponse);
-    this.auditLogger.readFileListSuccess(Collections.singletonList(fileListResponse.toString()));
+    this.auditLogger.readFileListSuccess(Collections.singletonList(fileListResponse.toString()), Collections.singletonList(FileServiceRole.EDITORS));
     return fileListResponse;
   }
 
