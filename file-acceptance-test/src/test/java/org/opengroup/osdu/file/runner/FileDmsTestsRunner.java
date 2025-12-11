@@ -24,9 +24,18 @@ import org.junit.runner.RunWith;
 @RunWith(Cucumber.class)
 @CucumberOptions(
     features = "classpath:features",
-    glue = { "classpath:org.opengroup.osdu.file.stepdefs" },
-    tags = {"@FileDMS" },
-    plugin = { "pretty", "junit:target/cucumber-reports/file-test-report.xml" })
+    glue = {
+        "classpath:org.opengroup.osdu.file.stepdefs"
+    },
+    tags = {
+        "@FileDMS"
+    },
+    plugin = {
+        "pretty",
+        "junit:target/cucumber-reports/file-test-report.xml",
+        "io.qameta.allure.cucumber5jvm.AllureCucumber5Jvm"
+    }
+)
 public class FileDmsTestsRunner {
 
 }
