@@ -17,6 +17,8 @@
 package org.opengroup.osdu.file.provider.aws.impl;
 
 import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.binary.Hex;
@@ -82,20 +84,31 @@ public class StorageUtilServiceImpl implements IStorageUtilService {
 
     @Override
     public String getChecksum(String filePath) {
-        ResponseInputStream<GetObjectResponse> s3Obj = getS3Object(filePath);
-
-        final long maxBytes = 5368709120L; // 5G
-        if (s3Obj.response().contentLength() < maxBytes) {
-            return calculateChecksum(s3Obj);
-        } else {
-            return "";
+        S3LocationWithCredentials locationWithCredentials = getS3LocationWithCredentials(filePath);
+        
+        try (S3Client s3Client = S3Helper.createS3Client(locationWithCredentials.location.getBucket(), locationWithCredentials.credentials)) {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                                                                .bucket(locationWithCredentials.location.getBucket())
+                                                                .key(locationWithCredentials.location.getKey())
+                                                                .build();
+            
+            try (ResponseInputStream<GetObjectResponse> response = s3Client.getObject(getObjectRequest)) {
+                final long maxBytes = 5368709120L; // 5G
+                if (response.response().contentLength() < maxBytes) {
+                    return calculateChecksum(response);
+                } else {
+                    return "";
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to read S3 object", e);
         }
     }
 
     @Override
     public ChecksumAlgorithm getChecksumAlgorithm() { return ChecksumAlgorithm.MD5; }
 
-    private ResponseInputStream<GetObjectResponse> getS3Object(String fileLocation) {
+    private S3LocationWithCredentials getS3LocationWithCredentials(String fileLocation) {
         S3Location unsignedLocation = S3Location.of(fileLocation);
         if (!unsignedLocation.isValid()) {
             throw new OsduBadRequestException(FileMetadataConstant.INVALID_SOURCE_EXCEPTION + fileLocation);
@@ -119,7 +132,17 @@ public class StorageUtilServiceImpl implements IStorageUtilService {
                 "S3 object not found");
         }
 
-        return S3Helper.getObject(unsignedLocation, credentials);
+        return new S3LocationWithCredentials(unsignedLocation, credentials);
+    }
+
+    private static class S3LocationWithCredentials {
+        final S3Location location;
+        final TemporaryCredentials credentials;
+        
+        S3LocationWithCredentials(S3Location location, TemporaryCredentials credentials) {
+            this.location = location;
+            this.credentials = credentials;
+        }
     }
 
     private Date getTemporaryCredentialsExpirationDate() {

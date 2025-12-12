@@ -32,6 +32,7 @@ import org.opengroup.osdu.file.provider.aws.auth.TemporaryCredentials;
 import org.opengroup.osdu.file.provider.aws.auth.TemporaryCredentialsProvider;
 import org.opengroup.osdu.file.provider.aws.model.S3Location;
 
+
 import java.net.URL;
 import java.util.Date;
 import java.util.Map;
@@ -138,13 +139,17 @@ public class S3Helper {
         return region.id();
     }
 
+    public static S3Client createS3Client(String bucket, TemporaryCredentials credentials) {
+        return generateClientWithCredentials(bucket, credentials);
+    }
+
     public static ResponseInputStream<GetObjectResponse> getObject(S3Location location, TemporaryCredentials credentials) {
-        try (S3Client s3 = generateClientWithCredentials(location.getBucket(), credentials)) {
+        try (S3Client s3Client = createS3Client(location.getBucket(), credentials)) {
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                                                                 .bucket(location.getBucket())
                                                                 .key(location.getKey())
                                                                 .build();
-            return s3.getObject(getObjectRequest);
+            return s3Client.getObject(getObjectRequest);
         }
     }
 
