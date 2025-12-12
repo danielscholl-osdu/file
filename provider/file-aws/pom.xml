@@ -35,11 +35,9 @@
     <properties>
         <aws.version>1.12.261</aws.version>
         <awsv2.version>2.30.32</awsv2.version>
-        <os-core-lib-aws.version>6.0.0</os-core-lib-aws.version>
-        <spring-boot.version>3.3.11</spring-boot.version>
+        <os-core-lib-aws.version>7.0.1</os-core-lib-aws.version>
         <deployment.environment>dev</deployment.environment>
         <spring-boot.repackage.skip>true</spring-boot.repackage.skip>
-        <log4j2.version>2.17.1</log4j2.version>
         <tomcat-embed-core.version>10.1.44</tomcat-embed-core.version>
         <json-smart.version>2.5.2</json-smart.version>
         <netty.version>4.1.124.Final</netty.version>
