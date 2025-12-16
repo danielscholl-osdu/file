@@ -12,7 +12,6 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>file-core-plus</artifactId>
   <description>implementation of File service APIs for cloud agnostic Datastore</description>
-  <version>0.30.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
 
