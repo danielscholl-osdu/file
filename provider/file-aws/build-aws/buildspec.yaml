@@ -66,8 +66,8 @@ phases:
 
             - echo "Building primary service assemblies..."
             #      - mvn -ntp clean package -B -pl file-core,provider/file-aws -Ddeployment.environment=prod
-            - mvn -ntp -B test install -pl .,file-core,provider/file-aws -P core,aws -Ddeployment.environment=prod
-            - mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -pl .,provider/file-aws -P aws -Dsonar.login=${SONAR_USERNAME} -Dsonar.password=${SONAR_PASSWORD} -Dsonar.branch.name=${BRANCH_NAME} -Dsonar.scm.disabled=true -Dsonar.host.url=${SONAR_URL}
+            - mvn -ntp -B clean test install -pl .,file-core,provider/file-aws -P core,aws -Ddeployment.environment=prod
+            - mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -pl .,provider/file-aws -P aws -Dsonar.login=${SONAR_USERNAME} -Dsonar.password=${SONAR_PASSWORD} -Dsonar.branch.name=${BRANCH_NAME} -Dsonar.scm.disabled=true -Dsonar.host.url=${SONAR_URL} -Dsonar.java.coveragePlugin=jacoco -Dsonar.coverage.jacoco.xmlReportPaths=./provider/file-aws/target/site/jacoco/jacoco.xml
             - echo "Building integration testing assemblies and gathering artifacts..."
             - ./testing/file-test-aws/build-aws/prepare-dist.sh
 

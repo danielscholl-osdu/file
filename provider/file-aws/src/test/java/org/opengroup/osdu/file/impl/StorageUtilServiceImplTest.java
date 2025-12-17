@@ -25,6 +25,8 @@ import org.opengroup.osdu.file.provider.aws.helper.ExpirationDateHelper;
 import org.opengroup.osdu.file.provider.aws.helper.S3Helper;
 import org.opengroup.osdu.file.util.ExpiryTimeUtil;
 import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -93,12 +95,15 @@ class StorageUtilServiceImplTest {
             
             s3HelperMock.when(() -> S3Helper.doesObjectExist(any(), any())).thenReturn(true);
             
+            // Mock S3Client creation
+            S3Client mockS3Client = mock(S3Client.class);
+            s3HelperMock.when(() -> S3Helper.createS3Client(any(), any())).thenReturn(mockS3Client);
+            
             ResponseInputStream<GetObjectResponse> responseStream = mock(ResponseInputStream.class);
             GetObjectResponse response = GetObjectResponse.builder().contentLength(10L).build();
             when(responseStream.response()).thenReturn(response);
             when(responseStream.read(any(byte[].class))).thenReturn(4, -1);
-            
-            s3HelperMock.when(() -> S3Helper.getObject(any(), any())).thenReturn(responseStream);
+            when(mockS3Client.getObject(any(GetObjectRequest.class))).thenReturn(responseStream);
             
             String actual = storageUtilService.getChecksum(uri);
             assertNotNull(actual);
