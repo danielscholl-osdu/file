@@ -45,6 +45,9 @@ include:
     file: "reporting/reporting.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
+    file: "publishing/common-pages.yml"
+
+  - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/gc-global.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
@@ -74,7 +77,6 @@ include:
     file: "cloud-providers/ibm-one-pipeline.yml"
 
   - local: "devops/gc/pipeline/override-stages.yml"
-  - local: "/publish.yml"
 
 .maven:
   image: maven:3.9.3-eclipse-temurin-17
