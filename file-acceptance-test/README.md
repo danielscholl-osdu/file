@@ -17,11 +17,12 @@ You will need to have the following environment variables defined.
 
 Authentication can be provided as OIDC config:
 
-| name                                            | value                                   | description                   | sensitive? | source |
-|-------------------------------------------------|-----------------------------------------|-------------------------------|------------|--------|
-| `PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_ID`     | `********`                              | PRIVILEGED_USER Client Id     | yes        | -      |
-| `PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_SECRET` | `********`                              | PRIVILEGED_USER Client secret | yes        | -      |
-| `TEST_OPENID_PROVIDER_URL`                      | `https://keycloak.com/auth/realms/osdu` | OpenID provider url           | yes        | -      |
+| name                                            | value                                   | description                                 | sensitive? | source |
+|-------------------------------------------------|-----------------------------------------|---------------------------------------------|------------|--------|
+| `PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_ID`     | `********`                              | PRIVILEGED_USER Client Id                   | yes        | -      |
+| `PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_SECRET` | `********`                              | PRIVILEGED_USER Client secret               | yes        | -      |
+| `TEST_OPENID_PROVIDER_URL`                      | `https://keycloak.com/auth/realms/osdu` | OpenID provider url                         | yes        | -      |
+| `PRIVILEGED_USER_OPENID_PROVIDER_SCOPE`         | ex `api://my-app/.default`              | OAuth2 scope (optional, defaults to openid) | no         | -      |
 
 Or tokens can be used directly from env variables:
 
