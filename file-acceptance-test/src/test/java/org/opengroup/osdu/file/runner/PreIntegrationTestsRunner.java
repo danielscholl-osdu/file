@@ -17,14 +17,25 @@
 
 package org.opengroup.osdu.file.runner;
 
-import org.junit.runner.RunWith;
-
 import io.cucumber.junit.Cucumber;
 import io.cucumber.junit.CucumberOptions;
+import org.junit.runner.RunWith;
 
 @RunWith(Cucumber.class)
-@CucumberOptions(features = "classpath:features", glue = { "classpath:org.opengroup.osdu.filedms.stepdefs" }, tags = {
-        "@Startup" }, plugin = { "pretty", "junit:target/cucumber-reports/file-DMS-test-report.xml" })
+@CucumberOptions(
+    features = "classpath:features",
+    glue = {
+        "classpath:org.opengroup.osdu.filedms.stepdefs"
+    },
+    tags = {
+        "@Startup"
+    },
+    plugin = {
+        "pretty",
+        "junit:target/cucumber-reports/file-DMS-test-report.xml",
+        "io.qameta.allure.cucumber5jvm.AllureCucumber5Jvm"
+    }
+)
 public class PreIntegrationTestsRunner {
 
 }

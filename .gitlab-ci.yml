@@ -42,7 +42,10 @@ include:
     file: "scanners/fossa-maven.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
-    file: "publishing/pages.yml"
+    file: "reporting/reporting.yml"
+
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "publishing/common-pages.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/gc-global.yml"
@@ -74,7 +77,6 @@ include:
     file: "cloud-providers/ibm-one-pipeline.yml"
 
   - local: "devops/gc/pipeline/override-stages.yml"
-
 
 .maven:
   image: maven:3.9.3-eclipse-temurin-17
