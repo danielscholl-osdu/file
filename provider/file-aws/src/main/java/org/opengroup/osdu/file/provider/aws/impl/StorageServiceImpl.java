@@ -84,9 +84,34 @@ public class StorageServiceImpl implements IStorageService {
     }
 
     @Override
+    public SignedUrl createSignedUrl(String fileID, String authorizationToken, String partitionID, SignedUrlParameters signedUrlParameters) {
+        log.debug("Creating the signed URL for file ID: {}, authorization: {}, partition ID: {}, expiry: {}", fileID, authorizationToken, partitionID, signedUrlParameters.getExpiryTime());
+
+        final Duration expiration = getDurationFromExpiryTime(signedUrlParameters.getExpiryTime());
+        final ProviderLocation fileLocation = fileLocationProvider.getUploadFileLocation(fileID, partitionID, expiration);
+
+        return mapTo(fileLocation);
+    }
+
+    @Override
+    public StorageInstructionsResponse createStorageInstructions(String datasetId, String partitionID, SignedUrlParameters signedUrlParameters) {
+        log.debug("Creating the provider location for dataset ID: {}, partition ID: {}, expiry: {}", datasetId, partitionID, signedUrlParameters.getExpiryTime());
+        
+        final Duration expiration = getDurationFromExpiryTime(signedUrlParameters.getExpiryTime());
+        final ProviderLocation fileLocation = fileLocationProvider.getUploadFileLocation(datasetId, partitionID, expiration);
+        
+        return createStorageInstructionsResponse(fileLocation, datasetId);
+    }
+
+    @Override
     public StorageInstructionsResponse createStorageInstructions(String datasetId, String partitionID) {
         log.debug("Creating the provider location for dataset ID: {}, partition ID: {}", datasetId, partitionID);
         final ProviderLocation fileLocation = fileLocationProvider.getUploadFileLocation(datasetId, partitionID);
+        
+        return createStorageInstructionsResponse(fileLocation, datasetId);
+    }
+
+    private StorageInstructionsResponse createStorageInstructionsResponse(ProviderLocation fileLocation, String datasetId) {
         final S3Location unsignedLocation = S3Location.of(fileLocation.getUnsignedUrl());
 
         final FileDmsStorageLocation dmsLocation =
@@ -145,9 +170,7 @@ public class StorageServiceImpl implements IStorageService {
 
         AwsRequestOverrideConfiguration overrideConfiguration = AwsRequestOverrideConfiguration.builder().headers(headOverrides).build();
 
-        final RelativeTimeValue relativeTimeValue = expiryTimeUtil.getExpiryTimeValueInTimeUnit(signedUrlParameters.getExpiryTime());
-        final long expireInMillis = relativeTimeValue.getTimeUnit().toMillis(relativeTimeValue.getValue());
-        final Duration expiration = Duration.ofMillis(expireInMillis);
+        final Duration expiration = getDurationFromExpiryTime(signedUrlParameters.getExpiryTime());
         final ProviderLocation fileLocation = fileLocationProvider.getRetrievalFileLocation(unsignedLocation, expiration, overrideConfiguration);
 
         return mapTo(fileLocation);
@@ -160,9 +183,7 @@ public class StorageServiceImpl implements IStorageService {
                 "Malformed URL",
                 "Unsigned URL is invalid, needs to be full S3 storage path");
         }
-        final RelativeTimeValue relativeTimeValue = expiryTimeUtil.getExpiryTimeValueInTimeUnit((new SignedUrlParameters()).getExpiryTime());
-        final long expireInMillis = relativeTimeValue.getTimeUnit().toMillis(relativeTimeValue.getValue());
-        final Duration expiration = Duration.ofMillis(expireInMillis);
+        final Duration expiration = getDurationFromExpiryTime((new SignedUrlParameters()).getExpiryTime());
         final Date expirationDate = ExpirationDateHelper.getExpiration(Instant.now(), expiration);
         final ProviderLocation fileLocation = fileLocationProvider.getRetrievalFileLocation(unsignedLocation, expiration);
         final String[] locationSourceSplit = fileLocation.getLocationSource().split("/");
@@ -185,6 +206,12 @@ public class StorageServiceImpl implements IStorageService {
                                          .datasetRegistryId(fileRetrievalData.getRecordId())
                                          .providerKey(fileLocationProvider.getProviderKey())
                                          .build();
+    }
+
+    private Duration getDurationFromExpiryTime(String expiryTime) {
+        final RelativeTimeValue relativeTimeValue = expiryTimeUtil.getExpiryTimeValueInTimeUnit(expiryTime);
+        final long expireInMillis = relativeTimeValue.getTimeUnit().toMillis(relativeTimeValue.getValue());
+        return Duration.ofMillis(expireInMillis);
     }
 
     private SignedUrl mapTo(ProviderLocation fileLocation) {

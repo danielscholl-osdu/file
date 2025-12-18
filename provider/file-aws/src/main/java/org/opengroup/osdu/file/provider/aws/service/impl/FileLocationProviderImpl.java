@@ -79,7 +79,13 @@ public class FileLocationProviderImpl implements FileLocationProvider {
 
     @Override
     public ProviderLocation getUploadFileLocation(String fileID, String partitionID) {
-        return getUploadLocationInternal(false, fileID, partitionID);
+        Duration defaultDuration = Duration.ofMinutes(providerConfigurationBag.s3SignedUrlExpirationTimeInMinutes);
+        return getUploadFileLocation(fileID, partitionID, defaultDuration);
+    }
+
+    @Override
+    public ProviderLocation getUploadFileLocation(String fileID, String partitionID, Duration expirationDuration) {
+        return getUploadLocationInternal(false, fileID, partitionID, expirationDuration);
     }
 
     @Override
@@ -94,7 +100,13 @@ public class FileLocationProviderImpl implements FileLocationProvider {
 
     @Override
     public ProviderLocation getFileCollectionUploadLocation(String datasetID, String partitionID) {
-        return getUploadLocationInternal(true, datasetID, partitionID);
+        Duration defaultDuration = Duration.ofMinutes(providerConfigurationBag.s3SignedUrlExpirationTimeInMinutes);
+        return getFileCollectionUploadLocation(datasetID, partitionID, defaultDuration);
+    }
+
+    @Override
+    public ProviderLocation getFileCollectionUploadLocation(String datasetID, String partitionID, Duration expirationDuration) {
+        return getUploadLocationInternal(true, datasetID, partitionID, expirationDuration);
     }
 
     @Override
@@ -107,7 +119,7 @@ public class FileLocationProviderImpl implements FileLocationProvider {
         return PROVIDER_KEY;
     }
 
-    private ProviderLocation getUploadLocationInternal(boolean isCollection, String resourceName, String partitionID) {
+    private ProviderLocation getUploadLocationInternal(boolean isCollection, String resourceName, String partitionID, Duration expirationDuration) {
         final S3ClientConnectionInfo s3ConnectionInfo = s3ConnectionInfoHelper.getS3ConnectionInfoForPartition(headers,
             providerConfigurationBag.bucketParameterRelativePath);
         this.checkS3ConnectionInfo(s3ConnectionInfo);
@@ -121,7 +133,6 @@ public class FileLocationProviderImpl implements FileLocationProvider {
             .withFolder(partitionID)
             .withFolder(RandomStringUtils.secure().nextAlphanumeric(RANDOM_KEY_LENGTH));
 
-        final Duration expirationDuration = Duration.ofMinutes(providerConfigurationBag.s3SignedUrlExpirationTimeInMinutes);
         final Date expiration = ExpirationDateHelper.getExpiration(Instant.now(), expirationDuration);
         final S3Location unsignedLocation = s3LocationBuilder.build();
 
