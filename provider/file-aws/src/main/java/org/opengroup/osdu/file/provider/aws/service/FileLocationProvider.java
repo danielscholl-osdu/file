@@ -26,12 +26,16 @@ import java.time.Duration;
 public interface FileLocationProvider {
 
     ProviderLocation getUploadFileLocation(String fileID, String partitionID);
+    
+    ProviderLocation getUploadFileLocation(String fileID, String partitionID, Duration expirationDuration);
 
     ProviderLocation getRetrievalFileLocation(S3Location unsignedLocation, Duration expirationDuration);
     
     ProviderLocation getRetrievalFileLocation(S3Location unsignedLocation, Duration expirationDuration, AwsRequestOverrideConfiguration requestOverrideConfiguration);
 
     ProviderLocation getFileCollectionUploadLocation(String datasetID, String partitionID);
+    
+    ProviderLocation getFileCollectionUploadLocation(String datasetID, String partitionID, Duration expirationDuration);
 
     ProviderLocation getFileCollectionRetrievalLocation(S3Location unsignedLocation, Duration expirationDuration);
 
