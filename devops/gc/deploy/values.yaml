@@ -25,6 +25,8 @@ data:
   entitlementsHost: "http://entitlements"
   partitionHost: "http://partition"
   storageHost: "http://storage"
+  otelJavaagentEnabled: "true"
+  otelExporterEndpoint: "http://opentelemetry-collector.opentelemetry.svc.cluster.local:4318"
 
 conf:
   configmap: "file-config"
