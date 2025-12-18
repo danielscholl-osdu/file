@@ -45,7 +45,7 @@
     <azure-core.version>1.45.0</azure-core.version>
 
     <!-- Utility Dependencies -->
-    <commons-fileupload.version>1.5</commons-fileupload.version>
+    <commons-fileupload.version>1.6.0</commons-fileupload.version>
     <lombok.version>1.18.42</lombok.version>
     <mapstruct.version>1.5.5.Final</mapstruct.version>
     <netty-tcnative.version>2.0.70.Final</netty-tcnative.version>
@@ -86,6 +86,12 @@
         <version>${spring-cloud.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <!-- Override transitive commons-fileupload to fix CVE-2025-48976 -->
+      <dependency>
+        <groupId>commons-fileupload</groupId>
+        <artifactId>commons-fileupload</artifactId>
+        <version>${commons-fileupload.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
