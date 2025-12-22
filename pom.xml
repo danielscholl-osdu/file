@@ -35,7 +35,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.8</version>
+    <version>3.5.9</version>
     <relativePath />
   </parent>
 
@@ -52,9 +52,9 @@
     <!--
        Important: spring-boot.version must be the same as the parent version
     -->
-    <spring-boot.version>3.5.8</spring-boot.version>
-    <spring-cloud.version>2025.0.0</spring-cloud.version>
-    <spring-framework-version>6.2.14</spring-framework-version>
+    <spring-boot.version>3.5.9</spring-boot.version>
+    <spring-cloud.version>2025.0.1</spring-cloud.version>
+    <spring-framework-version>6.2.15</spring-framework-version>
     <spring-security.version>6.5.7</spring-security.version>
 
     <!-- Project Versions-->
