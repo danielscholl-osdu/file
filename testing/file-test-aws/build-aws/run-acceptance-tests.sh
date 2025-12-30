@@ -21,34 +21,21 @@ SCRIPT_SOURCE_DIR=$(dirname "$0")
 cd "$SCRIPT_SOURCE_DIR"
 
 # Required variables for the tests
-export AWS_BASE_URL="https://${AWS_DOMAIN}"
+export INTEGRATION_TESTER_EMAIL="${ADMIN_USER}"
 
-export TEST_OPENID_PROVIDER_CLIENT_ID="integration-tester"
-export PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_ID="${TEST_OPENID_PROVIDER_CLIENT_ID}"
-export TEST_OPENID_PROVIDER_URL="https://keycloak.$CIMPL_DOMAIN/realms/osdu"
-export PRIVILEGED_USER_OPENID_PROVIDER_CLIENT_SECRET="${CIMPL_OPENID_PROVIDER_CLIENT_SECRET}"
-export INTEGRATION_TESTER_EMAIL="${AWS_IDP_AUTH_PARAMS_USER}"
-
-export STORAGE_HOST="${AWS_BASE_URL}/api/storage/v2/"
-export FILE_SERVICE_HOST="${AWS_BASE_URL}/api/file/v2"
-export PRIVATE_TENANT1="${AWS_DEFAULT_DATA_PARTITION_ID_TENANT1}"
-export PRIVATE_TENANT2="tenant2"
-export SHARED_TENANT="${AWS_DEFAULT_DATA_PARTITION_ID_TENANT2}"
-export TENANT_NAME="${AWS_TENANT_NAME}"
-export ACL_VIEWERS="data.default.viewers"
-export ACL_OWNERS="data.default.owners"
+export STORAGE_HOST="${AWS_BASE_URL}/api/storage/v2"
+export FILE_SERVICE_HOST="${AWS_BASE_URL}/api/file"
+export PRIVATE_TENANT1=osdu
+export PRIVATE_TENANT2=common
+export SHARED_TENANT=shared
+export TENANT_NAME="osdu"
 export ENTITLEMENTS_DOMAIN="example.com"
-export LEGAL_TAG="${AWS_LEGAL_TAG}"
-export TEST_OPENID_PROVIDER_CLIENT_SECRET="${CIMPL_OPENID_PROVIDER_CLIENT_SECRET}"
-
-export AWS_IDP_AUTH_FLOW="USER_PASSWORD_AUTH"
-export IDP_NAME="$(aws ssm get-parameter --name "/osdu/instances/${OSDU_INSTANCE_NAME}/config/idp/name" --query Parameter.Value --output text --region $AWS_REGION)"
-export AWS_IDP_CLIENT_ID="$(aws ssm get-parameter --name "/osdu/idp/${IDP_NAME}/client/id" --query Parameter.Value --output text --region $AWS_REGION)"
-export PRIVILEGED_USER_TOKEN=$(aws cognito-idp initiate-auth --region ${AWS_REGION} --auth-flow ${AWS_IDP_AUTH_FLOW} --client-id ${AWS_IDP_CLIENT_ID} --auth-parameters USERNAME=${AWS_IDP_AUTH_PARAMS_USER},PASSWORD=${AWS_IDP_AUTH_PARAMS_PASSWORD} --query AuthenticationResult.AccessToken --output text)
-export SIGNED_URL_EXPIRY_TIME_MINUTES="15"
+export INTEGRATION_TESTER_EMAIL=${ADMIN_USER}
+export LEGAL_TAG="osdu-public-usa-dataset"
+export PRIVILEGED_USER_TOKEN=$(curl --location ${TEST_OPENID_PROVIDER_URL} --header "Content-Type:application/x-www-form-urlencoded" --header "Authorization:Basic ${SERVICE_PRINCIPAL_AUTHORIZATION}" --data-urlencode "grant_type=client_credentials" --data-urlencode ${IDP_ALLOWED_SCOPES}  --http1.1 | jq -r '.access_token')
 
 # Run the tests
-mvn clean test
+mvn clean verify
 TEST_EXIT_CODE=$?
 
 # Return to original directory
