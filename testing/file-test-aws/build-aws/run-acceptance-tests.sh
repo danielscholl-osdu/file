@@ -32,7 +32,7 @@ export TENANT_NAME="osdu"
 export ENTITLEMENTS_DOMAIN="example.com"
 export INTEGRATION_TESTER_EMAIL=${ADMIN_USER}
 export LEGAL_TAG="osdu-public-usa-dataset"
-export PRIVILEGED_USER_TOKEN=$(curl --location ${TEST_OPENID_PROVIDER_URL} --header "Content-Type:application/x-www-form-urlencoded" --header "Authorization:Basic ${SERVICE_PRINCIPAL_AUTHORIZATION}" --data-urlencode "grant_type=client_credentials" --data-urlencode ${IDP_ALLOWED_SCOPES}  --http1.1 | jq -r '.access_token')
+export PRIVILEGED_USER_TOKEN=$(aws cognito-idp initiate-auth --region ${AWS_REGION} --auth-flow ${AWS_COGNITO_AUTH_FLOW} --client-id ${AWS_IDP_CLIENT_ID} --auth-parameters USERNAME=${ADMIN_USER},PASSWORD=${ADMIN_PASSWORD} --query AuthenticationResult.AccessToken --output text)
 
 # Run the tests
 mvn clean verify
