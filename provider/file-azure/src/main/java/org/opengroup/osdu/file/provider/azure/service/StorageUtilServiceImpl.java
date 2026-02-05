@@ -48,7 +48,7 @@ import java.security.NoSuchAlgorithmException;
 @RequiredArgsConstructor
 @Primary
 public class StorageUtilServiceImpl implements IStorageUtilService  {
-  private final String absolutePathFormat = "https://%s.blob.core.windows.net/%s/%s";
+  private final String absolutePathFormat = "%s/%s/%s";
   @Value("#{new Long(${CHECKSUM_CALCULATION_LIMIT})}")
   private long blobSizeLimit;
 
@@ -74,9 +74,10 @@ public class StorageUtilServiceImpl implements IStorageUtilService  {
 
   @Override
   public String getPersistentLocation(String relativePath, String partitionId) {
+
     return String.format(
         absolutePathFormat,
-        blobServiceClientWrapper.getStorageAccount(),
+        blobServiceClientWrapper.getStorageAccountURL(),
         blobStoreConfig.getPersistentContainer(),
         filePathUtil.normalizeFilePath(relativePath)
     );
@@ -86,7 +87,7 @@ public class StorageUtilServiceImpl implements IStorageUtilService  {
   public String getStagingLocation(String relativePath, String partitionId) {
     return String.format(
         absolutePathFormat,
-        blobServiceClientWrapper.getStorageAccount(),
+        blobServiceClientWrapper.getStorageAccountURL(),
         blobStoreConfig.getStagingContainer(),
         filePathUtil.normalizeFilePath(relativePath)
     );

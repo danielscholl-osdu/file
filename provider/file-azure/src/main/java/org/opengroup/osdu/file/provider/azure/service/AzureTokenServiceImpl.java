@@ -42,10 +42,9 @@ public class AzureTokenServiceImpl {
   private static final DefaultAzureCredential defaultCredential = new DefaultAzureCredentialBuilder().build();
 
   private UserDelegationKey getUserDelegationKey() {
-    String storageAccount = this.blobServiceClientWrapper.getStorageAccount();
-    String endpoint = calcBlobAccountUrl(storageAccount);
+    String storageAccountURL = this.blobServiceClientWrapper.getStorageAccountURL();
     BlobServiceClient rbacKeySource = new BlobServiceClientBuilder()
-        .endpoint(endpoint)
+        .endpoint(storageAccountURL)
         .credential(defaultCredential)
         .buildClient();
     OffsetDateTime expires = calcTokenExpirationDate(1, TimeUnit.DAYS);
@@ -68,10 +67,6 @@ public class AzureTokenServiceImpl {
     String sasToken = tokenSource.generateUserDelegationSas(tokenProps, key);
     String sasUri = String.format("%s?%s", blobUrl, sasToken);
     return sasUri;
-  }
-
-  private static String calcBlobAccountUrl(String accountName) {
-    return String.format("https://%s.blob.core.windows.net", accountName);
   }
 
   private static OffsetDateTime calcTokenExpirationDate(long duration, TimeUnit timeUnit) {

@@ -31,8 +31,10 @@ public class ServiceHelper {
   private static final String DIRECTORY_PATH = "directoryPath";
 
   // refer https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftstorage for naming convention
-  private final String absoluteFilePathPattern = "https://[a-z0-9][a-z0-9^-]*.blob.core.windows.net/(?<containerName>[^/]*)/(?<filePath>.*)";
-  private final String absoluteDirectoryPathPattern = "https://[a-z0-9][a-z0-9^-]*.dfs.core.windows.net/(?<fileSystemName>[^/]*)/(?<directoryPath>.*)";
+  // DNS endpoint patterns for Storage Accounts: https://learn.microsoft.com/en-us/azure/storage/common/storage-account-overview#azure-dns-zone-endpoints-preview
+  // Standard endpoint patterns for Storage Accounts: https://learn.microsoft.com/en-us/azure/storage/common/storage-account-overview#standard-endpoints
+  private final String absoluteFilePathPattern = "https://[a-z0-9][a-z0-9-]*\\.(blob\\.core\\.windows\\.net|z[0-9]{1,2}\\.blob\\.storage\\.azure\\.net)/(?<containerName>[^/]*)/(?<filePath>.*)";
+  private final String absoluteDirectoryPathPattern = "https://[a-z0-9][a-z0-9-]*\\.(dfs\\.core\\.windows\\.net|z[0-9]{1,2}\\.dfs\\.storage\\.azure\\.net)/(?<fileSystemName>[^/]*)/(?<directoryPath>.*)";
 
   public String getContainerNameFromAbsoluteFilePath(String absoluteFilePath) {
     return match(absoluteFilePathPattern, absoluteFilePath, CONTAINER_NAME);

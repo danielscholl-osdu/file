@@ -166,9 +166,9 @@ public class FileCollectionStorageServiceImplTest {
   public void testCreateRetrievalInstructions_EmptySignedUrl_ThrowsAppException() throws MalformedURLException {
     OffsetDateTime offsetDateTime = OffsetDateTime.now();
     when(expiryTimeUtil.getExpiryTimeInOffsetDateTime(any())).thenReturn(offsetDateTime);
-    when(serviceHelper.getFileSystemNameFromAbsoluteDirectoryPath(TestUtils.ABSOLUTE_DIRECTORY_PATH))
+    when(serviceHelper.getFileSystemNameFromAbsoluteDirectoryPath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_DIRECTORY_PATH))
         .thenReturn(TestUtils.STAGING_FILE_SYSTEM_NAME);
-    when(serviceHelper.getRelativeDirectoryPathFromAbsoluteDirectoryPath(TestUtils.ABSOLUTE_DIRECTORY_PATH))
+    when(serviceHelper.getRelativeDirectoryPathFromAbsoluteDirectoryPath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_DIRECTORY_PATH))
         .thenReturn(TestUtils.DIRECTORY_NAME);
     when(dpsHeaders.getPartitionId()).thenReturn(TestUtils.PARTITION);
     when(dataLakeStore.generatePreSignedURL(eq(TestUtils.PARTITION), eq(TestUtils.STAGING_FILE_SYSTEM_NAME),
@@ -181,8 +181,8 @@ public class FileCollectionStorageServiceImplTest {
         .hasMessageContaining("Could not generate signed URL for directory location");
 
     verify(expiryTimeUtil).getExpiryTimeInOffsetDateTime(any());
-    verify(serviceHelper).getFileSystemNameFromAbsoluteDirectoryPath(TestUtils.ABSOLUTE_DIRECTORY_PATH);
-    verify(serviceHelper).getRelativeDirectoryPathFromAbsoluteDirectoryPath(TestUtils.ABSOLUTE_DIRECTORY_PATH);
+    verify(serviceHelper).getFileSystemNameFromAbsoluteDirectoryPath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_DIRECTORY_PATH);
+    verify(serviceHelper).getRelativeDirectoryPathFromAbsoluteDirectoryPath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_DIRECTORY_PATH);
     verify(dpsHeaders).getPartitionId();
     verify(dataLakeStore).generatePreSignedURL(eq(TestUtils.PARTITION), eq(TestUtils.STAGING_FILE_SYSTEM_NAME),
         eq(TestUtils.DIRECTORY_NAME), eq(offsetDateTime), any());
@@ -205,9 +205,9 @@ public class FileCollectionStorageServiceImplTest {
     OffsetDateTime offsetDateTime = OffsetDateTime.now();
     when(fileLocationProperties.getUserId()).thenReturn(OSDU_USER);
     when(expiryTimeUtil.getExpiryTimeInOffsetDateTime(any())).thenReturn(offsetDateTime);
-    when(serviceHelper.getFileSystemNameFromAbsoluteDirectoryPath(TestUtils.ABSOLUTE_DIRECTORY_PATH))
+    when(serviceHelper.getFileSystemNameFromAbsoluteDirectoryPath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_DIRECTORY_PATH))
         .thenReturn(TestUtils.STAGING_FILE_SYSTEM_NAME);
-    when(serviceHelper.getRelativeDirectoryPathFromAbsoluteDirectoryPath(TestUtils.ABSOLUTE_DIRECTORY_PATH))
+    when(serviceHelper.getRelativeDirectoryPathFromAbsoluteDirectoryPath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_DIRECTORY_PATH))
         .thenReturn(TestUtils.DIRECTORY_NAME);
     when(dpsHeaders.getPartitionId()).thenReturn(TestUtils.PARTITION);
     when(dataLakeStore.generatePreSignedURL(eq(TestUtils.PARTITION), eq(TestUtils.STAGING_FILE_SYSTEM_NAME),
@@ -217,8 +217,8 @@ public class FileCollectionStorageServiceImplTest {
   private void verifyCreateSignedUrlFileLocationMocks() {
     verify(fileLocationProperties).getUserId();
     verify(expiryTimeUtil).getExpiryTimeInOffsetDateTime(any());
-    verify(serviceHelper, times(2)).getFileSystemNameFromAbsoluteDirectoryPath(TestUtils.ABSOLUTE_DIRECTORY_PATH);
-    verify(serviceHelper, times(2)).getRelativeDirectoryPathFromAbsoluteDirectoryPath(TestUtils.ABSOLUTE_DIRECTORY_PATH);
+    verify(serviceHelper, times(2)).getFileSystemNameFromAbsoluteDirectoryPath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_DIRECTORY_PATH);
+    verify(serviceHelper, times(2)).getRelativeDirectoryPathFromAbsoluteDirectoryPath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_DIRECTORY_PATH);
     verify(dpsHeaders,times(2)).getPartitionId();
     verify(dataLakeStore).generatePreSignedURL(eq(TestUtils.PARTITION), eq(TestUtils.STAGING_FILE_SYSTEM_NAME),
         eq(TestUtils.DIRECTORY_NAME), any(), any());
@@ -259,7 +259,7 @@ public class FileCollectionStorageServiceImplTest {
   private FileRetrievalData getFileRetrievalData() {
     return  FileRetrievalData.builder()
         .recordId(TestUtils.FILE_COLLECTION_RECORD_ID)
-        .unsignedUrl( TestUtils.ABSOLUTE_DIRECTORY_PATH)
+        .unsignedUrl( TestUtils.STANDARD_ENDPOINT_ABSOLUTE_DIRECTORY_PATH)
         .build();
   }
 }
