@@ -90,8 +90,8 @@ public class CloudStorageOperationImplTest {
     // setup
     Mockito.when(blobStore.copyFile(Mockito.anyString(),Mockito.anyString(),Mockito.anyString(),Mockito.anyString())).thenReturn(blobCopyInfo);
     prepareMockCopyFile();
-    cloudStorageOperation.copyFile(TestUtils.ABSOLUTE_FILE_PATH,TestUtils.ABSOLUTE_FILE_PATH);
-    verify(blobStore, times(1)).copyFile(TestUtils.PARTITION, TestUtils.RELATIVE_FILE_PATH,TestUtils.STAGING_CONTAINER_NAME,TestUtils.ABSOLUTE_FILE_PATH);
+    cloudStorageOperation.copyFile(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH,TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH);
+    verify(blobStore, times(1)).copyFile(TestUtils.PARTITION, TestUtils.RELATIVE_FILE_PATH,TestUtils.STAGING_CONTAINER_NAME,TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH);
     verifyMockCopyFile();
     verify(blobCopyInfo).getCopyStatus();
   }
@@ -100,19 +100,19 @@ public class CloudStorageOperationImplTest {
   public void copyFile_ShouldThrow_OsduBadRequestException_IfBlobStoreThrowsException() {
     Mockito.when(dpsHeaders.getPartitionId()).thenReturn(TestUtils.PARTITION);
     Mockito.when(serviceHelper
-        .getContainerNameFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH))
+        .getContainerNameFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH))
         .thenReturn(TestUtils.STAGING_CONTAINER_NAME);
     Mockito.when(serviceHelper
-        .getRelativeFilePathFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH))
+        .getRelativeFilePathFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH))
         .thenReturn(TestUtils.RELATIVE_FILE_PATH);
     Mockito.doThrow(BlobStorageException.class).when(
         blobStore).copyFile(
             TestUtils.PARTITION,
             TestUtils.RELATIVE_FILE_PATH,
             TestUtils.STAGING_CONTAINER_NAME,
-            TestUtils.ABSOLUTE_FILE_PATH);
+            TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH);
 
-    Assertions.assertThrows(OsduBadRequestException.class,()->{cloudStorageOperation.copyFile(TestUtils.ABSOLUTE_FILE_PATH,TestUtils.ABSOLUTE_FILE_PATH);});
+    Assertions.assertThrows(OsduBadRequestException.class,()->{cloudStorageOperation.copyFile(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH,TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH);});
   }
 
   @Test
@@ -121,23 +121,23 @@ public class CloudStorageOperationImplTest {
     for (String sourceFilePath : InvalidFilePaths) {
       // when
       Throwable thrown = catchThrowable(() -> cloudStorageOperation.copyFile(
-          sourceFilePath, TestUtils.ABSOLUTE_FILE_PATH));
+          sourceFilePath, TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH));
       // then
       then(thrown)
           .isInstanceOf(OsduBadRequestException.class)
           .hasMessageContaining(String.format("Illegal argument for source { %s } or destination { %s } file path",
-              sourceFilePath, TestUtils.ABSOLUTE_FILE_PATH));
+              sourceFilePath, TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH));
 
     }
     for (String destinationFilePath : InvalidFilePaths) {
       // when
       Throwable thrown = catchThrowable(() -> cloudStorageOperation.copyFile(
-          TestUtils.ABSOLUTE_FILE_PATH, destinationFilePath));
+          TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH, destinationFilePath));
       // then
       then(thrown)
           .isInstanceOf(OsduBadRequestException.class)
           .hasMessageContaining(String.format("Illegal argument for source { %s } or destination { %s } file path",
-              TestUtils.ABSOLUTE_FILE_PATH, destinationFilePath));
+              TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH, destinationFilePath));
 
     }
   }
@@ -147,13 +147,13 @@ public class CloudStorageOperationImplTest {
     // setup
     Mockito.when(dpsHeaders.getPartitionId()).thenReturn(TestUtils.PARTITION);
     Mockito.when(serviceHelper
-        .getContainerNameFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH))
+        .getContainerNameFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH))
         .thenReturn(TestUtils.STAGING_CONTAINER_NAME);
     Mockito.when(serviceHelper
-        .getRelativeFilePathFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH))
+        .getRelativeFilePathFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH))
         .thenReturn(TestUtils.RELATIVE_FILE_PATH);
     // call
-    cloudStorageOperation.deleteFile(TestUtils.ABSOLUTE_FILE_PATH);
+    cloudStorageOperation.deleteFile(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH);
     // verify
     verify(blobStore, times(1)).deleteFromStorageContainer(TestUtils.PARTITION, TestUtils.RELATIVE_FILE_PATH, TestUtils.STAGING_CONTAINER_NAME);
   }
@@ -178,7 +178,7 @@ public class CloudStorageOperationImplTest {
     List<FileCopyOperation> fileCopyOperationList = getFileCopyOperationsForFile();
 
     when(blobStore.copyFile(TestUtils.PARTITION, TestUtils.RELATIVE_FILE_PATH,
-        TestUtils.STAGING_CONTAINER_NAME,TestUtils.ABSOLUTE_FILE_PATH)).thenReturn(blobCopyInfo);
+        TestUtils.STAGING_CONTAINER_NAME,TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH)).thenReturn(blobCopyInfo);
 
     List<FileCopyOperationResponse> responses = cloudStorageOperation.copyFiles(fileCopyOperationList);
     Assertions.assertTrue(responses.get(0).isSuccess());
@@ -186,7 +186,7 @@ public class CloudStorageOperationImplTest {
 
     // verify
     verify(blobStore, times(1)).copyFile(TestUtils.PARTITION, TestUtils.RELATIVE_FILE_PATH,
-        TestUtils.STAGING_CONTAINER_NAME,TestUtils.ABSOLUTE_FILE_PATH);
+        TestUtils.STAGING_CONTAINER_NAME,TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH);
 
     verifyMockCopyFile();
     verify(blobCopyInfo).getCopyStatus();
@@ -286,8 +286,8 @@ public class CloudStorageOperationImplTest {
 
   private List<FileCopyOperation> getFileCopyOperationsForFile() {
     FileCopyOperation fileCopyOperation = new FileCopyOperation();
-    fileCopyOperation.setSourcePath(TestUtils.ABSOLUTE_FILE_PATH);
-    fileCopyOperation.setDestinationPath(TestUtils.ABSOLUTE_FILE_PATH);
+    fileCopyOperation.setSourcePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH);
+    fileCopyOperation.setDestinationPath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH);
 
     List<FileCopyOperation> list = new ArrayList<>();
     list.add(fileCopyOperation);
@@ -298,17 +298,17 @@ public class CloudStorageOperationImplTest {
   private void prepareMockCopyFile() {
     lenient().when(dpsHeaders.getPartitionId()).thenReturn(TestUtils.PARTITION);
     lenient().when(serviceHelper
-        .getContainerNameFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH))
+        .getContainerNameFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH))
         .thenReturn(TestUtils.STAGING_CONTAINER_NAME);
     lenient().when(serviceHelper
-        .getRelativeFilePathFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH))
+        .getRelativeFilePathFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH))
         .thenReturn(TestUtils.RELATIVE_FILE_PATH);
     lenient().when(blobCopyInfo.getCopyStatus()).thenReturn(CopyStatusType.SUCCESS);
   }
 
   private void verifyMockCopyFile() {
     verify(dpsHeaders).getPartitionId();
-    verify(serviceHelper).getContainerNameFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH);
-    verify(serviceHelper).getRelativeFilePathFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH);
+    verify(serviceHelper).getContainerNameFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH);
+    verify(serviceHelper).getRelativeFilePathFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH);
   }
 }
