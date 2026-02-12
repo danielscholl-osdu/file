@@ -1,5 +1,7 @@
 package org.opengroup.osdu.file.provider.azure.config;
 
+import java.util.logging.Logger;
+
 import jakarta.inject.Inject;
 
 import org.opengroup.osdu.azure.blobstorage.IBlobServiceClientFactory;
@@ -15,7 +17,7 @@ import com.azure.storage.blob.BlobServiceClient;
 @RequestScope
 public class BlobServiceClientWrapper {
 
-  private final String storageAccount;
+  private final String storageAccountURL;
 
   @Autowired
   private final IBlobServiceClientFactory blobServiceClientFactory;
@@ -27,10 +29,11 @@ public class BlobServiceClientWrapper {
     Validators.checkNotNullAndNotEmpty(dataPartitionId, "dataPartitionId");
 
     BlobServiceClient serviceClient = this.blobServiceClientFactory.getBlobServiceClient(dataPartitionId);
-    storageAccount = serviceClient.getAccountName();
+    storageAccountURL = serviceClient.getAccountUrl();
   }
 
-  public String getStorageAccount() {
-    return storageAccount;
+  public String getStorageAccountURL() {
+    return storageAccountURL.endsWith("/") ?
+      storageAccountURL.substring(0, storageAccountURL.length() - 1) : storageAccountURL;
   }
 }

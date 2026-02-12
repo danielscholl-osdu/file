@@ -89,7 +89,7 @@ public class StorageRepositoryTest {
     });
 
     verify(msiConfiguration).getIsEnabled();
-    verify(blobServiceClientWrapper).getStorageAccount();
+    verify(blobServiceClientWrapper).getStorageAccountURL();
     verify(dpsHeaders, times(2)).getPartitionId();
     verify(blobStore).generatePreSignedUrlWithUserDelegationSas(eq(TestUtils.PARTITION), eq(TestUtils.CONTAINER_NAME),
         eq(TestUtils.FILE_PATH), any(OffsetDateTime.class), any(BlobSasPermission.class));
@@ -115,7 +115,7 @@ public class StorageRepositoryTest {
     });
 
     verify(msiConfiguration).getIsEnabled();
-    verify(blobServiceClientWrapper).getStorageAccount();
+    verify(blobServiceClientWrapper).getStorageAccountURL();
     verify(dpsHeaders, times(2)).getPartitionId();
     verify(blobStore).generatePreSignedURL(eq(TestUtils.PARTITION),
         eq(TestUtils.FILE_PATH), eq(TestUtils.CONTAINER_NAME), any(OffsetDateTime.class), any(BlobSasPermission.class));
@@ -142,7 +142,7 @@ public class StorageRepositoryTest {
     });
 
     verify(msiConfiguration).getIsEnabled();
-    verify(blobServiceClientWrapper).getStorageAccount();
+    verify(blobServiceClientWrapper).getStorageAccountURL();
     verify(dpsHeaders, times(2)).getPartitionId();
     verify(expiryTimeUtil, times(1)).getExpiryTimeInOffsetDateTime(signedUrlParameters.getExpiryTime());
     verify(blobStore).generatePreSignedUrlWithUserDelegationSas(eq(TestUtils.PARTITION), eq(TestUtils.CONTAINER_NAME),
@@ -169,7 +169,7 @@ public class StorageRepositoryTest {
     });
 
     verify(msiConfiguration).getIsEnabled();
-    verify(blobServiceClientWrapper).getStorageAccount();
+    verify(blobServiceClientWrapper).getStorageAccountURL();
     verify(dpsHeaders, times(2)).getPartitionId();
     verify(expiryTimeUtil, times(1)).getExpiryTimeInOffsetDateTime(signedUrlParameters.getExpiryTime());
     verify(blobStore).generatePreSignedURL(eq(TestUtils.PARTITION),
@@ -212,7 +212,7 @@ public class StorageRepositoryTest {
     when(msiConfiguration.getIsEnabled()).thenReturn(isMsiEnabled);
     when(blob.getName()).thenReturn(TestUtils.FILE_PATH);
     when(blob.getContainer()).thenReturn(TestUtils.CONTAINER_NAME);
-    when(blobServiceClientWrapper.getStorageAccount()).thenReturn(TestUtils.STORAGE_NAME);
+    when(blobServiceClientWrapper.getStorageAccountURL()).thenReturn(TestUtils.STORAGE_URL);
     when(dpsHeaders.getPartitionId()).thenReturn(TestUtils.PARTITION);
     when(storage.create(eq(TestUtils.PARTITION), any(BlobInfo.class), eq(ArrayUtils.EMPTY_BYTE_ARRAY)))
         .thenReturn(blob);
