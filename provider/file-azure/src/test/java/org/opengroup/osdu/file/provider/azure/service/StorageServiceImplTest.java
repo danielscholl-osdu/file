@@ -180,13 +180,13 @@ class StorageServiceImplTest {
     for(String authToken: invalidAuthTokens) {
       // when
       Throwable thrown = catchThrowable(() -> storageService
-          .createSignedUrlFileLocation(TestUtils.ABSOLUTE_FILE_PATH, authToken,
+          .createSignedUrlFileLocation(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH, authToken,
               new SignedUrlParameters()));
       // then
       then(thrown)
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessageContaining(String.format("invalid received for authorizationToken (value: %s) or unsignedURL (value: %s)",
-              authToken, TestUtils.ABSOLUTE_FILE_PATH));
+              authToken, TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH));
       verify(blobStore, never()).generatePreSignedURL(
           anyString(), anyString(), anyString(), any(OffsetDateTime.class), any(BlobSasPermission.class));
     }
@@ -196,29 +196,29 @@ class StorageServiceImplTest {
   void createSignedUrlFileLocation_shouldThrow_whenSignedURLGeneratedIsNull() {
     // setup
     Mockito.when(serviceHelper
-        .getContainerNameFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH))
+        .getContainerNameFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH))
         .thenReturn(TestUtils.STAGING_CONTAINER_NAME);
     Mockito.when(serviceHelper
-        .getRelativeFilePathFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH))
+        .getRelativeFilePathFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH))
         .thenReturn(TestUtils.RELATIVE_FILE_PATH);
     Mockito.when(dpsHeaders.getPartitionId()).thenReturn(TestUtils.PARTITION);
     Mockito.doReturn(null).when(blobStore).generatePreSignedURL(
         anyString(),anyString(),anyString(),any(OffsetDateTime.class),any(BlobSasPermission.class));
 
     Throwable thrown = catchThrowable(() -> storageService
-        .createSignedUrlFileLocation(TestUtils.ABSOLUTE_FILE_PATH, TestUtils.AUTHORIZATION_TOKEN,
+        .createSignedUrlFileLocation(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH, TestUtils.AUTHORIZATION_TOKEN,
             new SignedUrlParameters()));
     // then
     then(thrown)
         .isInstanceOf(InternalServerErrorException.class)
-        .hasMessageContaining(String.format("Could not generate signed URL for file location %s", TestUtils.ABSOLUTE_FILE_PATH));
+        .hasMessageContaining(String.format("Could not generate signed URL for file location %s", TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH));
   }
 
   @Test
   void createSignedUrlFileLocation_ShouldCallGeneratePreSignedURL() {
     prepareMockForCreateSignedUrlFileLocation();
     storageService
-        .createSignedUrlFileLocation(TestUtils.ABSOLUTE_FILE_PATH, TestUtils.AUTHORIZATION_TOKEN,
+        .createSignedUrlFileLocation(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH, TestUtils.AUTHORIZATION_TOKEN,
             new SignedUrlParameters());
     verify(blobStore,times(1)).generatePreSignedURL(
         anyString(),anyString(),anyString(),any(OffsetDateTime.class), any(BlobSasPermission.class));
@@ -228,16 +228,16 @@ class StorageServiceImplTest {
   void createSignedUrlFileLocation_with_fileName_ShouldCallGeneratePreSignedURL() {
     Mockito.when(dpsHeaders.getPartitionId()).thenReturn(TestUtils.PARTITION);
     Mockito.when(serviceHelper
-        .getContainerNameFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH))
+        .getContainerNameFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH))
         .thenReturn(TestUtils.STAGING_CONTAINER_NAME);
     Mockito.when(serviceHelper
-        .getRelativeFilePathFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH))
+        .getRelativeFilePathFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH))
         .thenReturn(TestUtils.RELATIVE_FILE_PATH);
     String signedUrlString = getSignedObject().getUrl().toString();
     doReturn(signedUrlString).when(blobStore).generatePreSignedURL(
         anyString(), anyString(), anyString(), any(OffsetDateTime.class), any(BlobSasPermission.class), anyString(), anyString());
 
-    storageService.createSignedUrlFileLocation(TestUtils.ABSOLUTE_FILE_PATH,TestUtils.AUTHORIZATION_TOKEN,new SignedUrlParameters(null, TestUtils.FILE_NAME, TestUtils.FILE_CONTENT_TYPE));
+    storageService.createSignedUrlFileLocation(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH,TestUtils.AUTHORIZATION_TOKEN,new SignedUrlParameters(null, TestUtils.FILE_NAME, TestUtils.FILE_CONTENT_TYPE));
     verify(blobStore,times(1)).generatePreSignedURL(
         anyString(),anyString(),anyString(),any(OffsetDateTime.class), any(BlobSasPermission.class), anyString(), anyString());
   }
@@ -246,16 +246,16 @@ class StorageServiceImplTest {
   void createSignedUrlFileLocation_fileName_contains_comma_ShouldCallGeneratePreSignedURL() {
     Mockito.when(dpsHeaders.getPartitionId()).thenReturn(TestUtils.PARTITION);
     Mockito.when(serviceHelper
-            .getContainerNameFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH))
+            .getContainerNameFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH))
         .thenReturn(TestUtils.STAGING_CONTAINER_NAME);
     Mockito.when(serviceHelper
-            .getRelativeFilePathFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH))
+            .getRelativeFilePathFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH))
         .thenReturn(TestUtils.RELATIVE_FILE_PATH);
     String signedUrlString = getSignedObject().getUrl().toString();
     doReturn(signedUrlString).when(blobStore).generatePreSignedURL(
         anyString(), anyString(), anyString(), any(OffsetDateTime.class), any(BlobSasPermission.class), anyString(), anyString());
 
-    storageService.createSignedUrlFileLocation(TestUtils.ABSOLUTE_FILE_PATH,TestUtils.AUTHORIZATION_TOKEN,new SignedUrlParameters(null, TestUtils.FILE_NAME_WITH_COMMA, TestUtils.FILE_CONTENT_TYPE));
+    storageService.createSignedUrlFileLocation(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH,TestUtils.AUTHORIZATION_TOKEN,new SignedUrlParameters(null, TestUtils.FILE_NAME_WITH_COMMA, TestUtils.FILE_CONTENT_TYPE));
     verify(blobStore,times(1)).generatePreSignedURL(
         anyString(),anyString(),anyString(),any(OffsetDateTime.class), any(BlobSasPermission.class), anyString(), anyString());
   }
@@ -373,10 +373,10 @@ class StorageServiceImplTest {
   private void prepareMockForCreateSignedUrlFileLocation() {
     Mockito.when(dpsHeaders.getPartitionId()).thenReturn(TestUtils.PARTITION);
     Mockito.when(serviceHelper
-        .getContainerNameFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH))
+        .getContainerNameFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH))
         .thenReturn(TestUtils.STAGING_CONTAINER_NAME);
     Mockito.when(serviceHelper
-        .getRelativeFilePathFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH))
+        .getRelativeFilePathFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH))
         .thenReturn(TestUtils.RELATIVE_FILE_PATH);
     String signedUrlString = getSignedObject().getUrl().toString();
     doReturn(signedUrlString).when(blobStore).generatePreSignedURL(
@@ -386,9 +386,9 @@ class StorageServiceImplTest {
   private void verifyMockForCreateSignedUrlFileLocation() {
     Mockito.verify(dpsHeaders).getPartitionId();
     Mockito.verify(serviceHelper)
-        .getContainerNameFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH);
+        .getContainerNameFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH);
     Mockito.verify(serviceHelper)
-        .getRelativeFilePathFromAbsoluteFilePath(TestUtils.ABSOLUTE_FILE_PATH);
+        .getRelativeFilePathFromAbsoluteFilePath(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH);
     verify(blobStore).generatePreSignedURL(
         anyString(), anyString(), anyString(), any(OffsetDateTime.class), any(BlobSasPermission.class));
   }
@@ -397,7 +397,7 @@ class StorageServiceImplTest {
     List<FileRetrievalData> fileRetrievalDataList = new ArrayList<>();
     FileRetrievalData fileRetrievalData  = FileRetrievalData.builder()
         .recordId(TestUtils.FILE_RECORD_ID)
-        .unsignedUrl(TestUtils.ABSOLUTE_FILE_PATH)
+        .unsignedUrl(TestUtils.STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH)
         .build();
     fileRetrievalDataList.add(fileRetrievalData);
     return fileRetrievalDataList;

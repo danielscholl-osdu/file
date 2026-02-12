@@ -122,17 +122,17 @@ public class StorageRepository implements IStorageRepository {
         .build();
   }
 
-  private String getStorageAccountEndpoint(Blob blob) {
+  private String getStorageAccountContainerFilePathEndpoint(Blob blob) {
     String filepath = UriUtils.encodePath(blob.getName(), StandardCharsets.UTF_8);
-    return format(BLOB_RESOURCE_BASE_URI_REGEX, AZURE_PROTOCOL, getStorageAccount(), blob.getContainer(), filepath);
+    return format(BLOB_RESOURCE_BASE_URI_REGEX, getStorageAccountURL(), blob.getContainer(), filepath);
   }
 
   private URI getObjectUri(Blob blob) {
-    return URI.create(getStorageAccountEndpoint(blob));
+    return URI.create(getStorageAccountContainerFilePathEndpoint(blob));
   }
 
-  private String getStorageAccount() {
-    return blobServiceClientWrapper.getStorageAccount();
+  private String getStorageAccountURL() {
+    return blobServiceClientWrapper.getStorageAccountURL();
   }
 
   @Override
