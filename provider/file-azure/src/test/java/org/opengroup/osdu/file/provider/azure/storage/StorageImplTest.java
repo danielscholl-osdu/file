@@ -75,14 +75,14 @@ public class StorageImplTest {
   public void shouldCreateSignUrl() {
     TimeUnit mockTimeUnit = mock(TimeUnit.class);
     long duration = 1000;
-    when(blobServiceClientWrapper.getStorageAccount()).thenReturn(TestUtils.STORAGE_NAME);
+    when(blobServiceClientWrapper.getStorageAccountURL()).thenReturn(TestUtils.STORAGE_URL);
     when(azureTokenService.sign(anyString(), eq(duration), eq(mockTimeUnit)))
         .thenReturn(TestUtils.getSignedURL(TestUtils.STAGING_CONTAINER_NAME, TestUtils.FILE_NAME));
 
     URL signedUrl = storageImpl.signUrl(TestUtils.getBlobInfo(), duration, mockTimeUnit);
     Assertions.assertEquals(signedUrl.toString(), TestUtils.getSignedURL(TestUtils.STAGING_CONTAINER_NAME, TestUtils.FILE_NAME));
 
-    verify(blobServiceClientWrapper).getStorageAccount();
+    verify(blobServiceClientWrapper).getStorageAccountURL();
     verify(azureTokenService).sign(anyString(), eq(duration), eq(mockTimeUnit));
   }
 
@@ -90,13 +90,13 @@ public class StorageImplTest {
   public void shouldCreateSignUrl_ThrowMalformedURLException() {
     TimeUnit mockTimeUnit = mock(TimeUnit.class);
     long duration = 1000;
-    when(blobServiceClientWrapper.getStorageAccount()).thenReturn(TestUtils.STORAGE_NAME);
+    when(blobServiceClientWrapper.getStorageAccountURL()).thenReturn(TestUtils.STORAGE_URL);
     when(azureTokenService.sign(anyString(), eq(duration), eq(mockTimeUnit)))
         .thenReturn(TestUtils.INVALID_URL);
 
     Assertions.assertThrows(MalformedURLException.class , ()->{storageImpl.signUrl(TestUtils.getBlobInfo(), duration, mockTimeUnit);});
 
-    verify(blobServiceClientWrapper).getStorageAccount();
+    verify(blobServiceClientWrapper).getStorageAccountURL();
     verify(azureTokenService).sign(anyString(), eq(duration), eq(mockTimeUnit));
   }
 
@@ -104,7 +104,7 @@ public class StorageImplTest {
     BlobContainerClient mockBlobContainerClient = mock(BlobContainerClient.class);
     BlockBlobClient mockBlockBlobClient = mock(BlockBlobClient.class);
     BlobClient mockBlobClient = mock(BlobClient.class);
-    lenient().when(blobServiceClientWrapper.getStorageAccount()).thenReturn(TestUtils.STORAGE_NAME);
+    lenient().when(blobServiceClientWrapper.getStorageAccountURL()).thenReturn(TestUtils.STORAGE_URL);
     lenient().when(blobContainerClientFactory.getClient(
         TestUtils.PARTITION, TestUtils.STAGING_CONTAINER_NAME)).thenReturn(mockBlobContainerClient);
     lenient().when(mockBlobContainerClient.exists()).thenReturn(isBlobContainerClientExists);

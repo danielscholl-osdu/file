@@ -46,10 +46,15 @@ public final class TestUtils {
   public static final String STORAGE_NAME = "adotestfqofqosn0o4sa";
   public static final String RELATIVE_FILE_PATH = "osdu/file1";
   public static final String RELATIVE_DIRECTORY_PATH = "osdu";
-  public static final String ABSOLUTE_FILE_PATH = "https://" + TestUtils.STORAGE_NAME +
+  public static final String STORAGE_URL = "https://" + TestUtils.STORAGE_NAME + ".blob.core.windows.net";
+  public static final String STANDARD_ENDPOINT_ABSOLUTE_FILE_PATH = "https://" + TestUtils.STORAGE_NAME +
       ".blob.core.windows.net/" + TestUtils.STAGING_CONTAINER_NAME + "/" + TestUtils.RELATIVE_FILE_PATH;
-  public static final String ABSOLUTE_DIRECTORY_PATH = "https://" + TestUtils.STORAGE_NAME +
+  public static final String DNS_ENDPOINT_ABSOLUTE_FILE_PATH = "https://" + TestUtils.STORAGE_NAME +
+      ".z50.blob.storage.azure.net/" + TestUtils.STAGING_CONTAINER_NAME + "/" + TestUtils.RELATIVE_FILE_PATH;
+  public static final String STANDARD_ENDPOINT_ABSOLUTE_DIRECTORY_PATH = "https://" + TestUtils.STORAGE_NAME +
       ".dfs.core.windows.net/" + TestUtils.STAGING_FILE_SYSTEM_NAME + "/" + TestUtils.DIRECTORY_NAME;
+  public static final String DNS_ENDPOINT_ABSOLUTE_DIRECTORY_PATH = "https://" + TestUtils.STORAGE_NAME +
+      ".z50.dfs.storage.azure.net/" + TestUtils.STAGING_FILE_SYSTEM_NAME + "/" + TestUtils.DIRECTORY_NAME;
   public static final String UUID_REGEX = "(.{8})(.{4})(.{4})(.{4})(.{12})";
   public static final Pattern AZURE_OBJECT_URI
       = Pattern.compile("^https://[\\w,\\s-]+/[\\w,\\s-]+/[\\w,\\s-]+/[\\w,\\s-]+/?.*$");

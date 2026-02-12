@@ -81,7 +81,7 @@ public class StorageImpl implements Storage {
 
   @SneakyThrows
   private Blob internalCreate(String dataPartitionId, BlobInfo info, final byte[] content) {
-    String blobPath = generateBlobPath(blobServiceClientWrapper.getStorageAccount(), info.getContainer(), info.getName());
+    String blobPath = generateBlobPath(blobServiceClientWrapper.getStorageAccountURL(), info.getContainer(), info.getName());
     BlobUrlParts parts = BlobUrlParts.parse(blobPath);
     BlobContainerClient blobContainerClient = blobContainerClientFactory.getClient(dataPartitionId, parts.getBlobContainerName());
     if (!blobContainerClient.exists()) {
@@ -106,7 +106,7 @@ public class StorageImpl implements Storage {
   public URL signUrl(BlobInfo blobInfo, long duration, TimeUnit timeUnit) {
     try {
       log.debug("Signing the blob in container {} for path {}", blobInfo.getContainer(), blobInfo.getName());
-      String blobURL = generateBlobPath(blobServiceClientWrapper.getStorageAccount(), blobInfo.getContainer(), blobInfo.getName());
+      String blobURL = generateBlobPath(blobServiceClientWrapper.getStorageAccountURL(), blobInfo.getContainer(), blobInfo.getName());
       log.debug("Signing the blob {}", blobURL);
       String signedUrl = token.sign(blobURL, duration, timeUnit);
       return new URL(signedUrl);
@@ -116,9 +116,8 @@ public class StorageImpl implements Storage {
     }
   }
 
-  private static String generateBlobPath(String accountName, String containerName, String blobName) {
-    return String.format("https://%s.blob.core.windows.net/%s/%s", accountName, containerName, blobName);
+  private static String generateBlobPath(String storageAccountURL, String containerName, String blobName) {
+    return String.format("%s/%s/%s", storageAccountURL, containerName, blobName);
   }
 
 }
-
