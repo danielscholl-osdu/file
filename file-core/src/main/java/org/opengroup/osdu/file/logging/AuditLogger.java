@@ -53,28 +53,28 @@ public class AuditLogger {
     return this.events;
   }
 
-  public void readFileLocationSuccess(List<String> resources, List<String> requiredGroupsForAction) {
-    writeLog(getAuditEvents().getReadFileLocationEvent(AuditStatus.SUCCESS, resources, requiredGroupsForAction));
+  public void readFileLocationSuccess(List<String> resources) {
+    writeLog(getAuditEvents().getReadFileLocationEvent(AuditStatus.SUCCESS, resources));
   }
 
-  public void readFileLocationFailure(List<String> resources, List<String> requiredGroupsForAction) {
-    writeLog(getAuditEvents().getReadFileLocationEvent(AuditStatus.FAILURE, resources, requiredGroupsForAction));
+  public void readFileLocationFailure(List<String> resources) {
+    writeLog(getAuditEvents().getReadFileLocationEvent(AuditStatus.FAILURE, resources));
   }
 
-  public void readFileListSuccess(List<String> resources, List<String> requiredGroupsForAction) {
-    writeLog(getAuditEvents().getReadFileListEvent(AuditStatus.SUCCESS, resources, requiredGroupsForAction));
+  public void readFileListSuccess(List<String> resources) {
+    writeLog(getAuditEvents().getReadFileListEvent(AuditStatus.SUCCESS, resources));
   }
 
-  public void readFileListFailure(List<String> resources, List<String> requiredGroupsForAction) {
-    writeLog(getAuditEvents().getReadFileListEvent(AuditStatus.FAILURE, resources, requiredGroupsForAction));
+  public void readFileListFailure(List<String> resources) {
+    writeLog(getAuditEvents().getReadFileListEvent(AuditStatus.FAILURE, resources));
   }
 
-  public void createLocationSuccess(List<String> resources, List<String> requiredGroupsForAction) {
-    writeLog(getAuditEvents().getCreateLocationEvent(AuditStatus.SUCCESS, resources, requiredGroupsForAction));
+  public void createLocationSuccess(List<String> resources) {
+    writeLog(getAuditEvents().getCreateLocationEvent(AuditStatus.SUCCESS, resources));
   }
 
-  public void createLocationFailure(List<String> resources, List<String> requiredGroupsForAction) {
-    writeLog(getAuditEvents().getCreateLocationEvent(AuditStatus.FAILURE, resources, requiredGroupsForAction));
+  public void createLocationFailure(List<String> resources) {
+    writeLog(getAuditEvents().getCreateLocationEvent(AuditStatus.FAILURE, resources));
   }
 
   private void writeLog(AuditPayload log) {

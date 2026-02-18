@@ -30,7 +30,6 @@ import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.file.constant.FileServiceRole;
 
 import java.util.Collections;
-import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -58,51 +57,45 @@ public class AuditLoggerTest {
   @InjectMocks
   private AuditLogger sut;
 
-  private List<String> resources;
-  private List<String> requiredGroupsForAction;
-
   @BeforeEach
   public void setup() {
     when(headers.getUserEmail()).thenReturn("test_user@email.com");
     when(headers.getUserAuthorizedGroupName()).thenReturn(FileServiceRole.EDITORS);
     when(httpRequest.getHeader("X-Forwarded-For")).thenReturn("0.0.0.0:1234");
     when(httpRequest.getHeader("user-agent")).thenReturn("testAgent");
-
-    resources = Collections.singletonList("resources");
-    requiredGroupsForAction = Collections.singletonList(FileServiceRole.EDITORS);
   }
 
   @Test
   public void should_writeReadFileLocationSuccessEvent() {
 
-    sut.readFileLocationSuccess(resources, requiredGroupsForAction);
+    sut.readFileLocationSuccess(Collections.singletonList("resources"));
     verify(log, times(1)).audit(any());
   }
 
   @Test
   public void should_writeReadFileLocationFailureEvent() {
-    sut.readFileLocationFailure(resources, requiredGroupsForAction);
+    sut.readFileLocationFailure(Collections.singletonList("resources"));
 
     verify(log, times(1)).audit(any());
   }
 
   @Test
   public void should_writeReadFileListSuccessEvent() {
-    sut.readFileListSuccess(resources, requiredGroupsForAction);
+    sut.readFileListSuccess(Collections.singletonList("resources"));
 
     verify(log, times(1)).audit(any());
   }
 
   @Test
   public void should_writeReadFileListFailureEvent() {
-    sut.readFileListFailure(resources, requiredGroupsForAction);
+    sut.readFileListFailure(Collections.singletonList("resources"));
 
     verify(log, times(1)).audit(any());
   }
 
   @Test
   public void should_writeCreateLocationSuccessEvent() {
-    sut.createLocationSuccess(resources, requiredGroupsForAction);
+    sut.createLocationSuccess(Collections.singletonList("resources"));
 
     verify(log, times(1)).audit(any());
   }
@@ -111,7 +104,7 @@ public class AuditLoggerTest {
   public void should_writeCreateLocationSuccessEvent_whenIPv4XForwardedForIPHeaderIsPopulated() {
     when(httpRequest.getHeader("X-Forwarded-For")).thenReturn("111.111.111.111:1234");
 
-    sut.createLocationSuccess(resources, requiredGroupsForAction);
+    sut.createLocationSuccess(Collections.singletonList("resources"));
 
     verify(log, times(1)).audit(any());
   }
@@ -121,7 +114,7 @@ public class AuditLoggerTest {
     when(httpRequest.getHeader("X-Forwarded-For")).thenReturn(null);
     when(httpRequest.getRemoteAddr()).thenReturn("0.0.0.0:1234");
 
-    sut.createLocationSuccess(resources, requiredGroupsForAction);
+    sut.createLocationSuccess(Collections.singletonList("resources"));
 
     verify(log, times(1)).audit(any());
   }
@@ -129,7 +122,7 @@ public class AuditLoggerTest {
   @Test
   public void should_writeCreateLocationSuccessEvent_whenIPv4IPHeadersContainMultipleIPs() {
     when(httpRequest.getHeader("X-Forwarded-For")).thenReturn("0.0.0.0:1234,0.0.0.1:1234");
-    sut.createLocationSuccess(resources, requiredGroupsForAction);
+    sut.createLocationSuccess(Collections.singletonList("resources"));
 
     verify(log, times(1)).audit(any());
   }
@@ -138,7 +131,7 @@ public class AuditLoggerTest {
   public void should_writeCreateLocationSuccessEvent_whenIPv6XForwardedForIPHeaderIsPopulated() {
     when(httpRequest.getHeader("X-Forwarded-For")).thenReturn("[0000:0000:0000:0000:0000:0000:0000:0000]:1234");
 
-    sut.createLocationSuccess(resources, requiredGroupsForAction);
+    sut.createLocationSuccess(Collections.singletonList("resources"));
 
     verify(log, times(1)).audit(any());
   }
@@ -148,7 +141,7 @@ public class AuditLoggerTest {
     when(httpRequest.getHeader("X-Forwarded-For")).thenReturn(null);
     when(httpRequest.getRemoteAddr()).thenReturn("[0000:0000:0000:0000:0000:0000:0000:0000]:1234");
 
-    sut.createLocationSuccess(resources, requiredGroupsForAction);
+    sut.createLocationSuccess(Collections.singletonList("resources"));
 
     verify(log, times(1)).audit(any());
   }
@@ -156,14 +149,14 @@ public class AuditLoggerTest {
   @Test
   public void should_writeCreateLocationSuccessEvent_whenIPv6IPHeadersContainMultipleIPs() {
     when(httpRequest.getHeader("X-Forwarded-For")).thenReturn("[0000:0000:0000:0000:0000:0000:0000:0000]:1234,[0000:0000:0000:0000:0000:0000:0000:0001]:1234");
-    sut.createLocationSuccess(resources, requiredGroupsForAction);
+    sut.createLocationSuccess(Collections.singletonList("resources"));
 
     verify(log, times(1)).audit(any());
   }
 
   @Test
   public void should_writeCreateLocationFailureEvent() {
-    sut.createLocationFailure(resources, requiredGroupsForAction);
+    sut.createLocationFailure(Collections.singletonList("resources"));
 
     verify(log, times(1)).audit(any());
   }
@@ -173,7 +166,7 @@ public class AuditLoggerTest {
     when(headers.getUserEmail()).thenReturn(null);
 
     IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-      sut.createLocationFailure(resources, requiredGroupsForAction);
+      sut.createLocationFailure(Collections.singletonList("resources"));
     });
     assertNotNull(exception);
     assertEquals("User not provided for audit events.", exception.getMessage());
@@ -186,7 +179,7 @@ public class AuditLoggerTest {
     lenient().when(httpRequest.getRemoteAddr()).thenReturn(null);
 
     IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-      sut.createLocationFailure(resources, requiredGroupsForAction);
+      sut.createLocationFailure(Collections.singletonList("resources"));
     });
     assertNotNull(exception);
     assertEquals("User's IP address is not provided for audit events.", exception.getMessage());
@@ -197,7 +190,7 @@ public class AuditLoggerTest {
     when(httpRequest.getHeader("user-agent")).thenReturn(null);
 
     IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-      sut.createLocationFailure(resources, requiredGroupsForAction);
+      sut.createLocationFailure(Collections.singletonList("resources"));
     });
     assertNotNull(exception);
     assertEquals("User's agent is not provided for audit events.", exception.getMessage());
@@ -208,7 +201,7 @@ public class AuditLoggerTest {
     when(headers.getUserAuthorizedGroupName()).thenReturn(null);
 
     IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-      sut.createLocationFailure(resources, requiredGroupsForAction);
+      sut.createLocationFailure(Collections.singletonList("resources"));
     });
     assertNotNull(exception);
     assertEquals("User's authorized group name is not provided for audit events.", exception.getMessage());
@@ -216,7 +209,7 @@ public class AuditLoggerTest {
 
   @Test
   public void should_writeReadFileLocationFailure() {
-    sut.readFileLocationFailure(resources, requiredGroupsForAction);
+    sut.readFileLocationFailure(Collections.singletonList("resources"));
     verify(log, times(1)).audit(any());
   }
 }
