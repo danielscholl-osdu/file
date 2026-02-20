@@ -11,7 +11,6 @@ import org.opengroup.osdu.core.common.model.file.FileLocationResponse;
 import org.opengroup.osdu.core.common.model.file.LocationRequest;
 import org.opengroup.osdu.core.common.model.file.LocationResponse;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.file.constant.FileServiceRole;
 import org.opengroup.osdu.file.logging.AuditLogger;
 import org.opengroup.osdu.file.model.SignedUrlParameters;
 import org.opengroup.osdu.file.provider.interfaces.ILocationService;
@@ -70,7 +69,7 @@ public class FileLocationApiTest {
 
     assertNotNull(result);
     verify(locationService, times(1)).getLocation(locationRequest, headers);
-    verify(auditLogger, times(1)).createLocationSuccess(eq(Collections.singletonList(response)), eq(Collections.singletonList(FileServiceRole.EDITORS)));
+    verify(auditLogger, times(1)).createLocationSuccess(eq(Collections.singletonList(response)));
   }
 
   @Test
@@ -82,7 +81,7 @@ public class FileLocationApiTest {
 
     assertNotNull(result);
     verify(locationService, times(1)).getFileLocation(fileLocationRequest, headers);
-    verify(auditLogger, times(1)).readFileLocationSuccess(eq(Collections.singletonList(response)), eq(Collections.singletonList(FileServiceRole.EDITORS)));
+    verify(auditLogger, times(1)).readFileLocationSuccess(eq(Collections.singletonList(response)));
   }
 
   @Test
