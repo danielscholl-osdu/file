@@ -23,6 +23,7 @@ import com.google.common.base.Strings;
 import java.util.List;
 import org.opengroup.osdu.core.common.logging.audit.AuditAction;
 import org.opengroup.osdu.core.common.logging.audit.AuditPayload;
+import org.opengroup.osdu.core.common.logging.audit.AuditPayload.AuditPayloadBuilder;
 import org.opengroup.osdu.core.common.logging.audit.AuditStatus;
 
 public class AuditEvents {
@@ -49,48 +50,42 @@ public class AuditEvents {
     this.userAuthorizedGroupName = requireNonEmpty(userAuthorizedGroupName, "User's authorized group name is not provided for audit events.");
   }
 
-  public AuditPayload getReadFileLocationEvent(AuditStatus status, List<String> resources, List<String> requiredGroupsForAction) {
+  /**
+   * Creates an AuditPayload builder pre-populated with common audit fields.
+   */
+  private AuditPayloadBuilder createAuditPayloadBuilder(
+      List<String> requiredGroupsForAction, AuditStatus status, String actionId) {
     return AuditPayload.builder()
-        .action(AuditAction.READ)
         .status(status)
         .user(this.user)
-        .actionId(READ_FILE_LOCATION_ACTION_ID)
+        .actionId(actionId)
+        .requiredGroupsForAction(requiredGroupsForAction)
+        .userIpAddress(this.userIpAddress)
+        .userAgent(this.userAgent)
+        .userAuthorizedGroupName(this.userAuthorizedGroupName);
+  }
+
+  public AuditPayload getReadFileLocationEvent(AuditStatus status, List<String> resources) {
+    return createAuditPayloadBuilder(AuditOperation.READ_FILE_LOCATION.getRequiredGroups(), status, READ_FILE_LOCATION_ACTION_ID)
+        .action(AuditAction.READ)
         .message(getStatusMessage(status, READ_FILE_LOCATION_MESSAGE))
         .resources(resources)
-        .requiredGroupsForAction(requiredGroupsForAction)
-        .userIpAddress(this.userIpAddress)
-        .userAgent(this.userAgent)
-        .userAuthorizedGroupName(this.userAuthorizedGroupName)
         .build();
   }
 
-  public AuditPayload getReadFileListEvent(AuditStatus status, List<String> resources, List<String> requiredGroupsForAction) {
-    return AuditPayload.builder()
+  public AuditPayload getReadFileListEvent(AuditStatus status, List<String> resources) {
+    return createAuditPayloadBuilder(AuditOperation.READ_FILE_LIST.getRequiredGroups(), status, READ_FILE_LIST_ACTION_ID)
         .action(AuditAction.READ)
-        .status(status)
-        .user(this.user)
-        .actionId(READ_FILE_LIST_ACTION_ID)
         .message(getStatusMessage(status, READ_FILE_LIST_MESSAGE))
         .resources(resources)
-        .requiredGroupsForAction(requiredGroupsForAction)
-        .userIpAddress(this.userIpAddress)
-        .userAgent(this.userAgent)
-        .userAuthorizedGroupName(this.userAuthorizedGroupName)
         .build();
   }
 
-  public AuditPayload getCreateLocationEvent(AuditStatus status, List<String> resources, List<String> requiredGroupsForAction) {
-    return AuditPayload.builder()
+  public AuditPayload getCreateLocationEvent(AuditStatus status, List<String> resources) {
+    return createAuditPayloadBuilder(AuditOperation.CREATE_LOCATION.getRequiredGroups(), status, CREATE_LOCATION_ACTION_ID)
         .action(AuditAction.CREATE)
-        .status(status)
-        .user(this.user)
-        .actionId(CREATE_LOCATION_ACTION_ID)
         .message(getStatusMessage(status, CREATE_LOCATION_MESSAGE))
         .resources(resources)
-        .requiredGroupsForAction(requiredGroupsForAction)
-        .userIpAddress(this.userIpAddress)
-        .userAgent(this.userAgent)
-        .userAuthorizedGroupName(this.userAuthorizedGroupName)
         .build();
   }
 
