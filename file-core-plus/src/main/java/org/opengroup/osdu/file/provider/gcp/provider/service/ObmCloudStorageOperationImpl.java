@@ -24,19 +24,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-
 import org.opengroup.osdu.core.obm.core.Driver;
 import org.opengroup.osdu.core.obm.core.EnvironmentResolver;
 import org.opengroup.osdu.core.obm.core.ObmDriverRuntimeException;
 import org.opengroup.osdu.core.obm.core.ObmPathProvider;
-import org.opengroup.osdu.core.obm.core.model.Blob;
+import org.opengroup.osdu.core.obm.core.model.ObmBlob;
 import org.opengroup.osdu.core.obm.core.persistence.ObmDestination;
 import org.opengroup.osdu.file.constant.FileMetadataConstant;
 import org.opengroup.osdu.file.exception.OsduBadRequestException;
 import org.opengroup.osdu.file.model.file.FileCopyOperation;
 import org.opengroup.osdu.file.model.file.FileCopyOperationResponse;
 import org.opengroup.osdu.file.model.filecollection.DatasetCopyOperation;
-/*import org.opengroup.osdu.core.gcp.obm.driver.EnvironmentResolver;*/
 import org.opengroup.osdu.file.provider.interfaces.ICloudStorageOperation;
 import org.springframework.stereotype.Component;
 
@@ -64,7 +62,7 @@ public class ObmCloudStorageOperationImpl implements ICloudStorageOperation {
       throwBadRequest(INVALID_RESOURCE_PATH);
     }
 
-    Blob sourceBlob = obmDriver.getBlob(fromBucket, fromPath, obmDestination);
+    ObmBlob sourceBlob = obmDriver.getBlob(fromBucket, fromPath, obmDestination);
     if (sourceBlob == null) {
       throwBadRequest(getErrorMessageFileNotPresent(fromPath),
           FileMetadataConstant.INVALID_SOURCE_EXCEPTION + sourceFile);
@@ -112,7 +110,7 @@ public class ObmCloudStorageOperationImpl implements ICloudStorageOperation {
       throwBadRequest(INVALID_RESOURCE_PATH);
     }
 
-    Iterable<Blob> sourceBlobs = obmDriver.listBlobsByPrefix(fromBucket, obmDestination, fromPath);
+    Iterable<ObmBlob> sourceBlobs = obmDriver.listBlobsByPrefix(fromBucket, obmDestination, fromPath);
 
     if (!sourceBlobs.iterator().hasNext()) {
       throwBadRequest(getErrorMessageFileNotPresent(fromPath),
