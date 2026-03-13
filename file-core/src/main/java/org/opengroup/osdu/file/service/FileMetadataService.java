@@ -79,7 +79,7 @@ public class FileMetadataService {
             persistentLocation = storageUtilService.getPersistentLocation(filePath, dpsHeaders.getPartitionId());
 
             cloudStorageOperation.copyFile(stagingLocation, persistentLocation);
-            String checksum = storageUtilService.getChecksum(stagingLocation);
+            String checksum = storageUtilService.getChecksum(persistentLocation);
             if (!StringUtils.isBlank(checksum)) {
               FileSourceInfo fileSourceInfo = fileMetadata.getData().getDatasetProperties().getFileSourceInfo();
               fileSourceInfo.setChecksum(checksum);
