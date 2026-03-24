@@ -23,6 +23,10 @@ variables:
   AWS_DEPLOY_TARGET: TF
   AWS_EKS_DEPLOYMENT_NAME: os-file
 
+  #CIMPL
+  CIMPL_OPENAPI_SPEC_PATH: docs/api/community/v2/openapi.yaml
+  CIMPL_OPENAPI_YAML_ROUTE: /api/file/v2/api-docs.yaml
+
   ACCEPTANCE_TEST_DIR: "file-acceptance-test"
 
 include:
