@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/danielscholl-osdu/file/compare/v1.1.0...v1.2.0) (2026-03-27)
+
+
+### ✨ Features
+
+* **file:** Add v2 OpenAPI spec and update OBM dependency to 0.30.0 ([4c0a73a](https://github.com/danielscholl-osdu/file/commit/4c0a73ab6a29d057bb6109f91c59227304725b25))
+
+
+### 🔧 Miscellaneous
+
+* Sync template updates ([5a93cc5](https://github.com/danielscholl-osdu/file/commit/5a93cc5ea0e2944b3685a15b1e2e442ac350a473))
+
 ## [1.1.0](https://github.com/danielscholl-osdu/file/compare/v1.0.0...v1.1.0) (2026-02-20)
 
 
