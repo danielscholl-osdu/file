@@ -27,7 +27,7 @@ import org.opengroup.osdu.core.common.provider.interfaces.ITenantFactory;
 import org.opengroup.osdu.core.obm.core.Driver;
 import org.opengroup.osdu.core.obm.core.EnvironmentResolver;
 import org.opengroup.osdu.core.obm.core.ObmPathProvider;
-import org.opengroup.osdu.core.obm.core.model.Blob;
+import org.opengroup.osdu.core.obm.core.model.ObmBlob;
 import org.opengroup.osdu.core.obm.core.persistence.ObmDestination;
 import org.opengroup.osdu.file.api.FileDmsApi;
 import org.opengroup.osdu.file.constant.ChecksumAlgorithm;
@@ -83,12 +83,12 @@ public class ObmCloudStorageUtilServiceImpl implements IStorageUtilService {
     String fromBucket = pathProvider.extractBucketInfoFromUnsignedUrl(filePath, partitionId).getBucketName();
     String fromPath = pathProvider.getDirectoryPath(filePath, partitionId);
     ObmDestination obmDestination = ObmDestination.builder().partitionId(partitionId).build();
-    Blob sourceBlob = obmStorageDriver.getBlob(fromBucket, fromPath, obmDestination);
+    ObmBlob sourceBlob = obmStorageDriver.getBlob(fromBucket, fromPath, obmDestination);
     return sourceBlob.getChecksum();
   }
 
   @Override
   public ChecksumAlgorithm getChecksumAlgorithm() {
-    return ChecksumAlgorithm.MD5;
+    return ChecksumAlgorithm.valueOf(environmentResolver.getChecksumAlgorithm());
   }
 }
