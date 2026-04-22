@@ -25,4 +25,5 @@ CMD java -Djava.security.egd=file:/dev/./urandom \
          -Dlog4j.formatMsgNoLookups=true \
          -Dloader.path=plugins/ \
          -Dloader.main=org.opengroup.osdu.file.provider.gcp.FileCorePlusApplication \
+         -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
          -jar /app/file-${PROVIDER_NAME}.jar
