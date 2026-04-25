@@ -32,6 +32,8 @@ spec:
           - secretRef:
               name: {{ .Values.conf.rabbitmqSecretName | quote }}
           - secretRef:
+              name: {{ printf "%s-%s" .Values.global.dataPartitionId .Values.conf.fileS3SecretName | quote }}
+          - secretRef:
               name: {{ .Values.conf.fileMinioSecretName | quote }}
           - secretRef:
               name: {{ .Values.conf.fileKeycloakSecretName | quote }}
