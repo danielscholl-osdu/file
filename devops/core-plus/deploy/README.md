@@ -32,6 +32,7 @@ First you need to set variables in **values.yaml** file using any code editor. S
 |------|-------------|------|---------|---------|
 | **global.domain** | your domain for the external endpoint, ex `example.com` | string | - | yes |
 | **global.limitsEnabled** | whether CPU and memory limits are enabled | boolean | true | yes |
+| **global.dataPartitionId** | data partition ID (used as secret name prefix) | string | "osdu" | yes |
 
 ### Configmap variables
 
@@ -46,8 +47,8 @@ First you need to set variables in **values.yaml** file using any code editor. S
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|---------|
-| **data.requestsCpu** | amount of requested CPU | string | "10m" | yes |
-| **data.requestsMemory** | amount of requested memory| string | "450Mi" | yes |
+| **data.requestsCpu** | amount of requested CPU | string | "5m" | yes |
+| **data.requestsMemory** | amount of requested memory| string | "350Mi" | yes |
 | **data.limitsCpu** | CPU limit | string | "1" |only if `global.limitsEnabled` is true |
 | **data.limitsMemory** | memory limit | string | "1G" | only if `global.limitsEnabled` is true |
 | **data.serviceAccountName** | name of your service account | string | - | yes |
@@ -62,16 +63,18 @@ First you need to set variables in **values.yaml** file using any code editor. S
 | **conf.appName** | name of the app | string | "file" | yes |
 | **conf.rabbitmqSecretName** | secret for rabbitmq | string | "rabbitmq-secret" | yes |
 | **conf.fileMinioSecretName** | secret for MinIO | string | "file-minio-secret" | yes |
-| **conf.fileKeycloakSecretName** | secret for Keykloak | string | "file-keycloak-secret" | yes |
+| **conf.fileS3SecretName** | secret for SeaweedFS/S3 file storage (prefixed with `global.dataPartitionId`) | string | "file-seaweedfs-secret" | yes |
+| **conf.fileKeycloakSecretName** | secret for Keycloak | string | "file-keycloak-secret" | yes |
 | **conf.filePostgresSecretName** | secret for Postgres | string | "file-postgres-secret" | yes |
+| **conf.replicas** | number of deployment replicas | integer | 1 | yes |
 
 ### ISTIO variables
 
 | Name | Description | Type | Default |Required |
 |------|-------------|------|---------|---------|
-| **istio.proxyCPU** | CPU request for Envoy sidecars | string | 10m | yes |
+| **istio.proxyCPU** | CPU request for Envoy sidecars | string | 5m | yes |
 | **istio.proxyCPULimit** | CPU limit for Envoy sidecars | string | 500m | yes |
-| **istio.proxyMemory** | memory request for Envoy sidecars | string | 100Mi | yes |
+| **istio.proxyMemory** | memory request for Envoy sidecars | string | 50Mi | yes |
 | **istio.proxyMemoryLimit** | memory limit for Envoy sidecars | string | 512Mi | yes |
 | **istio.sidecarInject** | whether Istio sidecar will be injected. Setting to "false" reduces security, because disables authorization policy. | boolean | true | yes |
 
