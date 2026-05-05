@@ -130,7 +130,7 @@ public class ObmCollectionStorageService implements IFileCollectionStorageServic
     return SignedUrl.builder()
         .url(signedObject.getUrl())
         .uri(signedObject.getUri())
-        .fileSource(buildUnsignedFileSource(bucket, directoryId))
+        .fileSource(directoryId)
         .createdBy(dpsHeaders.getUserEmail())
         .createdAt(Instant.now(Clock.systemUTC()))
         .build();
@@ -177,11 +177,5 @@ public class ObmCollectionStorageService implements IFileCollectionStorageServic
     return RetrievalInstructionsResponse.builder()
         .datasets(datasetRetrievalProperties)
         .build();
-  }
-
-  // File collection metadata expects a full storage path, for example:
-  // s3://refi-osdu-staging-area/58390a34-d351-4985-a461-c4f9c23a58a3
-  private String buildUnsignedFileSource(String bucketName, String directoryId) {
-    return String.format("%s%s/%s", environmentResolver.getTransferProtocol(dpsHeaders.getPartitionId()), bucketName, directoryId);
   }
 }

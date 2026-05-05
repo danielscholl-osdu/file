@@ -99,7 +99,7 @@ public class ObmStorageService implements IStorageService {
     return SignedUrl.builder()
         .url(signedObject.getUrl())
         .uri(signedObject.getUri())
-        .fileSource(buildUnsignedFileSource(stagingBucket, filepath, partitionId))
+        .fileSource("/" + filepath)
         .createdBy(dpsHeaders.getUserEmail())
         .createdAt(Instant.now(Clock.systemUTC()))
         .build();
@@ -171,11 +171,5 @@ public class ObmStorageService implements IStorageService {
           GCS_MAX_FILEPATH, filePath.length()));
     }
     return filePath;
-  }
-
-  // Metadata save now expects a full storage path, for example:
-  // s3://refi-osdu-staging-area/58390a34-d351-4985-a461-c4f9c23a58a3/file-id
-  private String buildUnsignedFileSource(String bucketName, String filepath, String partitionId) {
-    return format("%s%s/%s", environmentResolver.getTransferProtocol(partitionId), bucketName, filepath);
   }
 }
