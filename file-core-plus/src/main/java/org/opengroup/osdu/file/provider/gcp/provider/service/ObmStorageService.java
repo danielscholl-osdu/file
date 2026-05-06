@@ -82,27 +82,33 @@ public class ObmStorageService implements IStorageService {
 
   @Override
   public SignedUrl createSignedUrl(String fileName, String authorizationToken, String partitionId) {
-    log.debug("Creating the signed blob for fileName : {}. Authorization : {}, partitionId : {}",
-        fileName, authorizationToken, partitionId);
+    log.info("[FILE-TEST-FLOW] ObmStorageService.createSignedUrl: STARTED, fileName={}, partitionId={}",
+        fileName, partitionId);
 
     String filepath = generateRelativePath(fileName);
+    log.info("[FILE-TEST-FLOW] ObmStorageService.createSignedUrl: generatedRelativePath={}", filepath);
 
     String stagingBucket = partitionPropertyResolver.getOptionalPropertyValue(partitionPropertyNames.getStagingLocationName(), partitionId).orElseGet(() -> {
       TenantInfo tenantInfo = tenantFactory.getTenantInfo(partitionId);
-      return String.format("%s-%s-%s", tenantInfo.getProjectId(), tenantInfo.getName(), properties.getStagingArea());
+      String bucket = String.format("%s-%s-%s", tenantInfo.getProjectId(), tenantInfo.getName(), properties.getStagingArea());
+      log.info("[FILE-TEST-FLOW] ObmStorageService.createSignedUrl: computed stagingBucket from tenant={}", bucket);
+      return bucket;
     });
-    log.debug("Create storage object for fileName {} in bucket {} with filepath {}",
-        fileName, stagingBucket, filepath);
+    log.info("[FILE-TEST-FLOW] ObmStorageService.createSignedUrl: stagingBucket={}, filepath={}", stagingBucket, filepath);
 
     SignedObject signedObject = storageRepository.createSignedObject(stagingBucket, filepath);
+    log.info("[FILE-TEST-FLOW] ObmStorageService.createSignedUrl: signedObject.url={}, signedObject.uri={}",
+        signedObject.getUrl(), signedObject.getUri());
 
-    return SignedUrl.builder()
+    SignedUrl result = SignedUrl.builder()
         .url(signedObject.getUrl())
         .uri(signedObject.getUri())
         .fileSource("/" + filepath)
         .createdBy(dpsHeaders.getUserEmail())
         .createdAt(Instant.now(Clock.systemUTC()))
         .build();
+    log.info("[FILE-TEST-FLOW] ObmStorageService.createSignedUrl: COMPLETED, fileSource={}", result.getFileSource());
+    return result;
   }
 
   @Override

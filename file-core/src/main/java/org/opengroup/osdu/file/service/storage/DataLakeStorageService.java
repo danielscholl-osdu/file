@@ -11,11 +11,14 @@ import org.opengroup.osdu.core.common.model.storage.MultiRecordInfo;
 import org.opengroup.osdu.core.common.util.UrlNormalizationUtil;
 import org.opengroup.osdu.file.model.storage.Record;
 import org.opengroup.osdu.file.model.storage.UpsertRecords;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
 public class DataLakeStorageService {
+    private static final Logger log = LoggerFactory.getLogger(DataLakeStorageService.class);
     private final String storageServiceBaseUrl;
     private final IHttpClient httpClient;
     private final DpsHeaders headers;
@@ -40,22 +43,30 @@ public class DataLakeStorageService {
 
     public UpsertRecords upsertRecord(Record[] records) throws StorageException {
         String url = this.createUrl("/records");
+        log.info("[FILE-TEST-FLOW] DataLakeStorage.upsertRecord: PUT {} (records count={})", url, records.length);
         HttpResponse result = this.httpClient
                 .send(HttpRequest.put(records).url(url).headers(this.headers.getHeaders()).build());
+        log.info("[FILE-TEST-FLOW] DataLakeStorage.upsertRecord: response code={}", result.getResponseCode());
         return this.getResult(result, UpsertRecords.class);
     }
 
     public Record getRecord(String id) throws StorageException {
         String url = this.createUrl(String.format("/records/%s", id));
+        log.info("[FILE-TEST-FLOW] DataLakeStorage.getRecord: GET {}", url);
         HttpResponse result = this.httpClient
                 .send(HttpRequest.get().url(url).headers(this.headers.getHeaders()).build());
-        return result.IsNotFoundCode() ? null : this.getResult(result, Record.class);
+        boolean notFound = result.IsNotFoundCode();
+        log.info("[FILE-TEST-FLOW] DataLakeStorage.getRecord: response code={}, isNotFound={}",
+                result.getResponseCode(), notFound);
+        return notFound ? null : this.getResult(result, Record.class);
     }
 
     public HttpResponse deleteRecord(String id) {
         String url = this.createUrl(String.format("/records/%s:delete", id));
+        log.info("[FILE-TEST-FLOW] DataLakeStorage.deleteRecord: POST {}", url);
         HttpResponse result = this.httpClient
                 .send(HttpRequest.post("{'anything':'anything'}").url(url).headers(this.headers.getHeaders()).build());
+        log.info("[FILE-TEST-FLOW] DataLakeStorage.deleteRecord: response code={}", result.getResponseCode());
         return result;
     }
 

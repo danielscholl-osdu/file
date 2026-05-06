@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.core.common.model.http.AppError;
 import org.opengroup.osdu.file.constant.FileServiceRole;
 import org.opengroup.osdu.file.exception.ApplicationException;
@@ -32,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequestMapping(value = "/v2/files")
 @RequiredArgsConstructor
@@ -57,7 +59,13 @@ public class FileMetadataApi {
     public ResponseEntity<FileMetadataResponse> postFilesMetadata(
             @Validated(FileMetadataValidationSequence.class) @RequestBody FileMetadata fileMetadata)
             throws OsduBadRequestException, StorageException, ApplicationException {
+        log.info("[FILE-TEST-FLOW] Step3: POST /v2/files/metadata - kind={}, fileSource={}",
+            fileMetadata.getKind(),
+            fileMetadata.getData() != null && fileMetadata.getData().getDatasetProperties() != null
+                && fileMetadata.getData().getDatasetProperties().getFileSourceInfo() != null
+                ? fileMetadata.getData().getDatasetProperties().getFileSourceInfo().getFileSource() : "null");
         FileMetadataResponse response = fileMetadataService.saveMetadata(fileMetadata);
+        log.info("[FILE-TEST-FLOW] Step3: POST /v2/files/metadata - COMPLETED, id={}", response.getId());
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -96,7 +104,9 @@ public class FileMetadataApi {
     @PreAuthorize("@authorizationFilter.hasPermission('" + FileServiceRole.EDITORS + "', '" + FileServiceRole.ADMIN + "')")
     public ResponseEntity<Void> deleteFileMetadataById(@Parameter(description = "File metadata record Id.")  @PathVariable("id") String id)
             throws OsduBadRequestException, ApplicationException, NotFoundException, StorageException {
+        log.info("[FILE-TEST-FLOW] Step4/5: DELETE /v2/files/{}/metadata - STARTED", id);
         fileMetadataService.deleteMetadataRecord(id);
+        log.info("[FILE-TEST-FLOW] Step4/5: DELETE /v2/files/{}/metadata - COMPLETED 204", id);
         return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
     }
 }

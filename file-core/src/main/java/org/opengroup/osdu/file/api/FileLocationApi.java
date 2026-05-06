@@ -126,10 +126,13 @@ public class FileLocationApi {
   @PreAuthorize("@authorizationFilter.hasPermission('" + FileServiceRole.EDITORS+ "')")
   public LocationResponse getLocationFile(@Parameter(description = "The Time for which Signed URL to be valid. Accepted Regex patterns are \"^[0-9]+M$\", \"^[0-9]+H$\", \"^[0-9]+D$\" denoting Integer values in Minutes, Hours, Days respectively. In absence of this parameter the URL would be valid for 1 Hour.",
       example = "5M")  @RequestParam(required = false, name = "expiryTime") String expiryTime) throws JsonProcessingException {
+    log.info("[FILE-TEST-FLOW] Step1: GET /v2/files/uploadURL - expiryTime={}", expiryTime);
     SignedUrlParameters signedUrlParameters = new SignedUrlParameters(expiryTime);
     LocationRequest req = (new ObjectMapper()).readValue("{}", LocationRequest.class);
     LocationResponse locationResponse = locationService.getLocation(req, headers, signedUrlParameters);
-    log.debug("Location result ready : {}", locationResponse);
+    log.info("[FILE-TEST-FLOW] Step1: GET /v2/files/uploadURL - COMPLETED, fileID={}, location={}",
+        locationResponse != null ? locationResponse.getFileID() : "null",
+        locationResponse != null ? locationResponse.getLocation() : "null");
     return locationResponse;
   }
 

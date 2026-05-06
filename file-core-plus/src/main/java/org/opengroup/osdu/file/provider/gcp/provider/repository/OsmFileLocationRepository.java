@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.core.common.model.file.FileListRequest;
 import org.opengroup.osdu.core.common.model.file.FileListResponse;
 import org.opengroup.osdu.core.common.model.file.FileLocation;
@@ -51,6 +52,7 @@ import org.opengroup.osdu.file.provider.interfaces.IFileLocationRepository;
 import org.springframework.beans.support.PagedListHolder;
 import org.springframework.stereotype.Repository;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class OsmFileLocationRepository implements IFileLocationRepository {
@@ -66,7 +68,9 @@ public class OsmFileLocationRepository implements IFileLocationRepository {
 
   @Override
   public FileLocation findByFileID(String fileID) {
+    log.info("[FILE-TEST-FLOW] OsmFileLocationRepo.findByFileID: fileID={}", fileID);
     if (Objects.isNull(fileID)) {
+      log.info("[FILE-TEST-FLOW] OsmFileLocationRepo.findByFileID: fileID is null, returning null");
       return null;
     }
     GetQuery<FileLocationOsm> fileLocationGetQuery =
@@ -74,15 +78,20 @@ public class OsmFileLocationRepository implements IFileLocationRepository {
             eq(FILE_ID, fileID));
     List<FileLocationOsm> resultsAsList = osmDatabaseContext.getResultsAsList(fileLocationGetQuery);
     Optional<FileLocationOsm> locationOsm = resultsAsList.stream().findFirst();
-    return locationOsm.map(FileLocationOsm::toFileLocation).orElse(null);
+    FileLocation result = locationOsm.map(FileLocationOsm::toFileLocation).orElse(null);
+    log.info("[FILE-TEST-FLOW] OsmFileLocationRepo.findByFileID: found={}", result != null);
+    return result;
   }
 
   @Override
   public FileLocation save(FileLocation fileLocation) {
+    log.info("[FILE-TEST-FLOW] OsmFileLocationRepo.save: fileID={}, location={}", fileLocation.getFileID(), fileLocation.getLocation());
     this.random.setSeed(fileLocation.hashCode());
     long aLong = random.nextLong();
     FileLocationOsm fileLocationOsm = new FileLocationOsm(fileLocation, aLong);
-    return osmDatabaseContext.createAndGet(getDestination(), fileLocationOsm).toFileLocation();
+    FileLocation saved = osmDatabaseContext.createAndGet(getDestination(), fileLocationOsm).toFileLocation();
+    log.info("[FILE-TEST-FLOW] OsmFileLocationRepo.save: COMPLETED for fileID={}", saved.getFileID());
+    return saved;
   }
 
   //  TODO refactor after pagination implemented in osm

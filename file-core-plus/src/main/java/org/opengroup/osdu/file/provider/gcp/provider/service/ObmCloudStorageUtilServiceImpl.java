@@ -29,6 +29,7 @@ import org.opengroup.osdu.core.obm.core.EnvironmentResolver;
 import org.opengroup.osdu.core.obm.core.ObmPathProvider;
 import org.opengroup.osdu.core.obm.core.model.ObmBlob;
 import org.opengroup.osdu.core.obm.core.persistence.ObmDestination;
+import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.file.api.FileDmsApi;
 import org.opengroup.osdu.file.constant.ChecksumAlgorithm;
 import org.opengroup.osdu.file.exception.OsduBadRequestException;
@@ -42,6 +43,7 @@ import org.springframework.stereotype.Component;
  * Used for getRetrievalInstructions and copyDatasetsToPersistentLocation operations {@link FileDmsApi}.
  * Directory paths are generated based on `gcp.storage.stagingArea` and `gcp.storage.persistentArea properties`.
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ObmCloudStorageUtilServiceImpl implements IStorageUtilService {
@@ -57,24 +59,35 @@ public class ObmCloudStorageUtilServiceImpl implements IStorageUtilService {
 
   @Override
   public String getPersistentLocation(String relativePath, String partitionId) {
-    return partitionPropertyResolver.getOptionalPropertyValue(partitionPropertyNames.getPersistentLocationName(), partitionId).orElseGet(() -> {
+    log.info("[FILE-TEST-FLOW] ObmStorageUtil.getPersistentLocation: relativePath={}, partitionId={}", relativePath, partitionId);
+    String result = partitionPropertyResolver.getOptionalPropertyValue(partitionPropertyNames.getPersistentLocationName(), partitionId).orElseGet(() -> {
       TenantInfo tenantInfo = tenantFactory.getTenantInfo(partitionId);
-      return String.format("%s%s-%s-%s%s", environmentResolver.getTransferProtocol(partitionId),
+      String computed = String.format("%s%s-%s-%s%s", environmentResolver.getTransferProtocol(partitionId),
           tenantInfo.getProjectId(), tenantInfo.getName(), properties.getPersistentArea(), relativePath);
+      log.info("[FILE-TEST-FLOW] ObmStorageUtil.getPersistentLocation: computed from tenant (no partition prop), result={}", computed);
+      return computed;
     });
+    log.info("[FILE-TEST-FLOW] ObmStorageUtil.getPersistentLocation: RESULT={}", result);
+    return result;
   }
 
   @Override
   public String getStagingLocation(String relativePath, String partitionId) {
-    return partitionPropertyResolver.getOptionalPropertyValue(partitionPropertyNames.getStagingLocationName(), partitionId).orElseGet(() -> {
+    log.info("[FILE-TEST-FLOW] ObmStorageUtil.getStagingLocation: relativePath={}, partitionId={}", relativePath, partitionId);
+    String result = partitionPropertyResolver.getOptionalPropertyValue(partitionPropertyNames.getStagingLocationName(), partitionId).orElseGet(() -> {
       TenantInfo tenantInfo = tenantFactory.getTenantInfo(partitionId);
-      return String.format("%s%s-%s-%s%s", environmentResolver.getTransferProtocol(partitionId),
+      String computed = String.format("%s%s-%s-%s%s", environmentResolver.getTransferProtocol(partitionId),
           tenantInfo.getProjectId(), tenantInfo.getName(), properties.getStagingArea(), relativePath);
+      log.info("[FILE-TEST-FLOW] ObmStorageUtil.getStagingLocation: computed from tenant (no partition prop), result={}", computed);
+      return computed;
     });
+    log.info("[FILE-TEST-FLOW] ObmStorageUtil.getStagingLocation: RESULT={}", result);
+    return result;
   }
 
   @Override
   public String getChecksum(String filePath) {
+    log.info("[FILE-TEST-FLOW] ObmStorageUtil.getChecksum: filePath={}", filePath);
     if (Strings.isBlank(filePath)) {
       throw new OsduBadRequestException(String.format("Illegal file path argument - { %s }", filePath));
     }
@@ -82,9 +95,12 @@ public class ObmCloudStorageUtilServiceImpl implements IStorageUtilService {
     String partitionId = dpsHeaders.getPartitionId();
     String fromBucket = pathProvider.extractBucketInfoFromUnsignedUrl(filePath, partitionId).getBucketName();
     String fromPath = pathProvider.getDirectoryPath(filePath, partitionId);
+    log.info("[FILE-TEST-FLOW] ObmStorageUtil.getChecksum: fromBucket={}, fromPath={}", fromBucket, fromPath);
     ObmDestination obmDestination = ObmDestination.builder().partitionId(partitionId).build();
     ObmBlob sourceBlob = obmStorageDriver.getBlob(fromBucket, fromPath, obmDestination);
-    return sourceBlob.getChecksum();
+    String checksum = sourceBlob.getChecksum();
+    log.info("[FILE-TEST-FLOW] ObmStorageUtil.getChecksum: RESULT={}", checksum);
+    return checksum;
   }
 
   @Override

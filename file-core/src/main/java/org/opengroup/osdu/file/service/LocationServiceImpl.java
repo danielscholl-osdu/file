@@ -59,16 +59,18 @@ public class LocationServiceImpl implements ILocationService {
   @Override
   public LocationResponse getLocation(LocationRequest request, DpsHeaders headers,
                                       SignedUrlParameters signedUrlParameters) {
-    log.debug("Request to create location for file upload with parameters : {}", request);
+    log.info("[FILE-TEST-FLOW] LocationService.getLocation: STARTED, request={}, expiryTime={}",
+        request, signedUrlParameters != null ? signedUrlParameters.getExpiryTime() : "null");
     validationService.validateLocationRequest(request);
     checkExisting(request);
 
     String fileID = getFileID(request);
+    log.info("[FILE-TEST-FLOW] LocationService.getLocation: fileID={}", fileID);
 
-    log.debug("Create the empty blob in bucket. FileID : {}", fileID);
     SignedUrl signedUrl = storageService.createSignedUrl(fileID, headers.getAuthorization(),
         headers.getPartitionIdWithFallbackToAccountId(), signedUrlParameters);
-    log.debug("Signed URL for fileID = {} : {}", fileID, signedUrl);
+    log.info("[FILE-TEST-FLOW] LocationService.getLocation: signedUrl created, uri={}, fileSource={}",
+        signedUrl.getUri(), signedUrl.getFileSource());
 
     FileLocation fileLocation = FileLocation.builder()
         .fileID(fileID)
@@ -78,11 +80,12 @@ public class LocationServiceImpl implements ILocationService {
         .createdAt(Date.from(signedUrl.getCreatedAt()))
         .build();
 
-    log.debug("Save file location document : {}", fileLocation);
+    log.info("[FILE-TEST-FLOW] LocationService.getLocation: saving file location, fileID={}", fileID);
     FileLocation saved = fileLocationRepository.save(fileLocation);
+    log.info("[FILE-TEST-FLOW] LocationService.getLocation: file location saved");
 
     LocationResponse response = locationMapper.buildLocationResponse(signedUrl, saved);
-    log.debug("Location creation result : {}", response);
+    log.info("[FILE-TEST-FLOW] LocationService.getLocation: COMPLETED");
     return response;
   }
 

@@ -53,6 +53,7 @@ public class ObmStorageRepository implements IStorageRepository {
 
   @Override
   public SignedObject createSignedObject(String bucketName, String filepath) {
+    log.info("[FILE-TEST-FLOW] ObmStorageRepo.createSignedObject: bucketName={}, filepath={}", bucketName, filepath);
     return prepareSignedObject(bucketName, filepath, ObmHttpMethod.PUT, new SignedUrlParameters());
   }
 
