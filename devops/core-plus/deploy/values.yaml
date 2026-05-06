@@ -23,7 +23,7 @@ conf:
   appName: "file"
   rabbitmqSecretName: "rabbitmq-secret"
   fileMinioSecretName: "file-minio-secret"
-  fileS3SecretName: "file-seaweedfs-secret"
+  s3SecretName: "file-seaweedfs-secret"
   fileKeycloakSecretName: "file-keycloak-secret"
   filePostgresSecretName: "file-postgres-secret"
   replicas: 1

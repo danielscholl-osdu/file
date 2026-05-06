@@ -63,7 +63,7 @@ First you need to set variables in **values.yaml** file using any code editor. S
 | **conf.appName** | name of the app | string | "file" | yes |
 | **conf.rabbitmqSecretName** | secret for rabbitmq | string | "rabbitmq-secret" | yes |
 | **conf.fileMinioSecretName** | secret for MinIO | string | "file-minio-secret" | yes |
-| **conf.fileS3SecretName** | secret for SeaweedFS/S3 file storage (prefixed with `global.dataPartitionId`) | string | "file-seaweedfs-secret" | yes |
+| **conf.s3SecretName** | secret for SeaweedFS/S3 file storage (prefixed with `global.dataPartitionId`) | string | "file-seaweedfs-secret" | yes |
 | **conf.fileKeycloakSecretName** | secret for Keycloak | string | "file-keycloak-secret" | yes |
 | **conf.filePostgresSecretName** | secret for Postgres | string | "file-postgres-secret" | yes |
 | **conf.replicas** | number of deployment replicas | integer | 1 | yes |
