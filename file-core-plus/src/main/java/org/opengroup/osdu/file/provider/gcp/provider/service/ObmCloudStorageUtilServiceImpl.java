@@ -59,30 +59,64 @@ public class ObmCloudStorageUtilServiceImpl implements IStorageUtilService {
 
   @Override
   public String getPersistentLocation(String relativePath, String partitionId) {
-    log.info("[FILE-TEST-FLOW] ObmStorageUtil.getPersistentLocation: relativePath={}, partitionId={}", relativePath, partitionId);
-    String result = partitionPropertyResolver.getOptionalPropertyValue(partitionPropertyNames.getPersistentLocationName(), partitionId).orElseGet(() -> {
-      TenantInfo tenantInfo = tenantFactory.getTenantInfo(partitionId);
-      String computed = String.format("%s%s-%s-%s%s", environmentResolver.getTransferProtocol(partitionId),
-          tenantInfo.getProjectId(), tenantInfo.getName(), properties.getPersistentArea(), relativePath);
-      log.info("[FILE-TEST-FLOW] ObmStorageUtil.getPersistentLocation: computed from tenant (no partition prop), result={}", computed);
-      return computed;
-    });
-    log.info("[FILE-TEST-FLOW] ObmStorageUtil.getPersistentLocation: RESULT={}", result);
-    return result;
+    return resolveLocation(relativePath, partitionId,
+        partitionPropertyNames.getPersistentLocationName(), properties.getPersistentArea());
   }
 
   @Override
   public String getStagingLocation(String relativePath, String partitionId) {
-    log.info("[FILE-TEST-FLOW] ObmStorageUtil.getStagingLocation: relativePath={}, partitionId={}", relativePath, partitionId);
-    String result = partitionPropertyResolver.getOptionalPropertyValue(partitionPropertyNames.getStagingLocationName(), partitionId).orElseGet(() -> {
-      TenantInfo tenantInfo = tenantFactory.getTenantInfo(partitionId);
-      String computed = String.format("%s%s-%s-%s%s", environmentResolver.getTransferProtocol(partitionId),
-          tenantInfo.getProjectId(), tenantInfo.getName(), properties.getStagingArea(), relativePath);
-      log.info("[FILE-TEST-FLOW] ObmStorageUtil.getStagingLocation: computed from tenant (no partition prop), result={}", computed);
-      return computed;
-    });
-    log.info("[FILE-TEST-FLOW] ObmStorageUtil.getStagingLocation: RESULT={}", result);
+    return resolveLocation(relativePath,
+        partitionId,
+        partitionPropertyNames.getStagingLocationName(),
+        properties.getStagingArea());
+  }
+
+  /**
+   * Builds a full unsigned URL for a blob location by combining the transfer protocol,
+   * bucket name, and relative path.
+   *
+   * <p>The bucket name is resolved from the partition property (if configured) or computed
+   * from tenant info as a fallback.
+   *
+   * <p>Example output (partition property configured, bucket = "refi-osdu-staging-area"):
+   * <pre>
+   *   https://seaweedfs.dev1.osdu-cimpl.opengroup.org/refi-osdu-staging-area/uuid/fileId
+   * </pre>
+   *
+   * <p>Example output (fallback, projectId = "refi", name = "osdu", areaSuffix = "staging-area"):
+   * <pre>
+   *   https://seaweedfs.dev1.osdu-cimpl.opengroup.org/refi-osdu-staging-area/uuid/fileId
+   * </pre>
+   *
+   * <p>The result must be a full unsigned S3 URL because downstream consumers
+   * ({@link ObmPathProvider#extractBucketInfoFromUnsignedUrl}) parse the bucket and path from it.
+   *
+   * @param relativePath          the relative blob path, e.g. "/uuid/fileId"
+   * @param partitionId           the data partition identifier
+   * @param partitionPropertyName the partition property key for the bucket name
+   * @param fallbackAreaSuffix    the area suffix used when no partition property is set
+   * @return full unsigned URL suitable for ObmPathProvider parsing
+   */
+  private String resolveLocation(String relativePath,
+                                 String partitionId,
+                                 String partitionPropertyName,
+                                 String fallbackAreaSuffix) {
+    String protocol = environmentResolver.getTransferProtocol(partitionId);
+    // Resolve bucket name: partition property takes priority, otherwise derive from tenant info
+    String bucket = partitionPropertyResolver
+        .getOptionalPropertyValue(partitionPropertyName, partitionId)
+        .orElseGet(() -> defaultBucketName(partitionId, fallbackAreaSuffix));
+    // Combine into full unsigned URL: protocol + bucket + relativePath
+    String result = protocol + bucket + relativePath;
+    log.info("[FILE-TEST-FLOW] ObmStorageUtil.resolveLocation: partitionProp={}, bucket={}, result={}",
+        partitionPropertyName, bucket, result);
     return result;
+  }
+
+  // e.g. "refi" + "-" + "osdu" + "-" + "staging-area" → "refi-osdu-staging-area"
+  private String defaultBucketName(String partitionId, String areaSuffix) {
+    TenantInfo tenantInfo = tenantFactory.getTenantInfo(partitionId);
+    return tenantInfo.getProjectId() + "-" + tenantInfo.getName() + "-" + areaSuffix;
   }
 
   @Override
