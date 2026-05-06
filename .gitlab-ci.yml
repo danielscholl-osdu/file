@@ -194,7 +194,7 @@ download_plugins:
     expire_in: 1 days
   script:
     - mvn dependency:copy -DrepoUrl=$OSM_PACKAGE_REGISTRY_URL -Dartifact="org.opengroup.osdu:os-osm-postgres:$OSM_VERSION:jar:plugin" -Dtransitive=false -DoutputDirectory="./tmp"
-    - curl -fL "https://community.opengroup.org/osdu/platform/system/lib/drivers/os-obm/-/jobs/4163205/artifacts/file/os-obm-s3/target/os-obm-s3-trusted-fix-for-property-resolver-SNAPSHOT-plugin.jar" -o "./tmp/os-obm-s3-fix-for-property-resolver-plugin.jar"
+    - mvn dependency:copy -DrepoUrl=$OBM_PACKAGE_REGISTRY_URL -Dartifact="org.opengroup.osdu:os-obm-s3:$OBM_VERSION:jar:plugin" -Dtransitive=false -DoutputDirectory="./tmp"
     - mvn dependency:copy -DrepoUrl=$OQM_PACKAGE_REGISRTY_URL -Dartifact="org.opengroup.osdu:os-oqm-rabbitmq:$OQM_VERSION:jar:plugin" -Dtransitive=false -DoutputDirectory="./tmp"
   only:
     variables:
