@@ -59,18 +59,17 @@ public class LocationServiceImpl implements ILocationService {
   @Override
   public LocationResponse getLocation(LocationRequest request, DpsHeaders headers,
                                       SignedUrlParameters signedUrlParameters) {
-    log.info("[FILE-TEST-FLOW] LocationService.getLocation: STARTED, request={}, expiryTime={}",
+    log.debug("Resolving upload location: request={}, expiryTime={}",
         request, signedUrlParameters != null ? signedUrlParameters.getExpiryTime() : "null");
     validationService.validateLocationRequest(request);
     checkExisting(request);
 
     String fileID = getFileID(request);
-    log.info("[FILE-TEST-FLOW] LocationService.getLocation: fileID={}", fileID);
+    log.debug("Resolved fileID={}", fileID);
 
     SignedUrl signedUrl = storageService.createSignedUrl(fileID, headers.getAuthorization(),
         headers.getPartitionIdWithFallbackToAccountId(), signedUrlParameters);
-    log.info("[FILE-TEST-FLOW] LocationService.getLocation: signedUrl created, uri={}, fileSource={}",
-        signedUrl.getUri(), signedUrl.getFileSource());
+    log.debug("Created signed URL: uri={}, fileSource={}", signedUrl.getUri(), signedUrl.getFileSource());
 
     FileLocation fileLocation = FileLocation.builder()
         .fileID(fileID)
@@ -80,12 +79,12 @@ public class LocationServiceImpl implements ILocationService {
         .createdAt(Date.from(signedUrl.getCreatedAt()))
         .build();
 
-    log.info("[FILE-TEST-FLOW] LocationService.getLocation: saving file location, fileID={}", fileID);
+    log.debug("Persisting file location: fileID={}", fileID);
     FileLocation saved = fileLocationRepository.save(fileLocation);
-    log.info("[FILE-TEST-FLOW] LocationService.getLocation: file location saved");
+    log.debug("Persisted file location: fileID={}", saved.getFileID());
 
     LocationResponse response = locationMapper.buildLocationResponse(signedUrl, saved);
-    log.info("[FILE-TEST-FLOW] LocationService.getLocation: COMPLETED");
+    log.debug("Completed location resolution: fileID={}", fileID);
     return response;
   }
 

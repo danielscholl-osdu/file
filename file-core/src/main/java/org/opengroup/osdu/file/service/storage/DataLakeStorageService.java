@@ -43,30 +43,29 @@ public class DataLakeStorageService {
 
     public UpsertRecords upsertRecord(Record[] records) throws StorageException {
         String url = this.createUrl("/records");
-        log.info("[FILE-TEST-FLOW] DataLakeStorage.upsertRecord: PUT {} (records count={})", url, records.length);
+        log.debug("Upserting records: url={}, count={}", url, records.length);
         HttpResponse result = this.httpClient
                 .send(HttpRequest.put(records).url(url).headers(this.headers.getHeaders()).build());
-        log.info("[FILE-TEST-FLOW] DataLakeStorage.upsertRecord: response code={}", result.getResponseCode());
+        log.debug("Upsert response: code={}", result.getResponseCode());
         return this.getResult(result, UpsertRecords.class);
     }
 
     public Record getRecord(String id) throws StorageException {
         String url = this.createUrl(String.format("/records/%s", id));
-        log.info("[FILE-TEST-FLOW] DataLakeStorage.getRecord: GET {}", url);
+        log.debug("Fetching record: url={}", url);
         HttpResponse result = this.httpClient
                 .send(HttpRequest.get().url(url).headers(this.headers.getHeaders()).build());
         boolean notFound = result.IsNotFoundCode();
-        log.info("[FILE-TEST-FLOW] DataLakeStorage.getRecord: response code={}, isNotFound={}",
-                result.getResponseCode(), notFound);
+        log.debug("Fetch record response: code={}, notFound={}", result.getResponseCode(), notFound);
         return notFound ? null : this.getResult(result, Record.class);
     }
 
     public HttpResponse deleteRecord(String id) {
         String url = this.createUrl(String.format("/records/%s:delete", id));
-        log.info("[FILE-TEST-FLOW] DataLakeStorage.deleteRecord: POST {}", url);
+        log.debug("Deleting record: url={}", url);
         HttpResponse result = this.httpClient
                 .send(HttpRequest.post("{'anything':'anything'}").url(url).headers(this.headers.getHeaders()).build());
-        log.info("[FILE-TEST-FLOW] DataLakeStorage.deleteRecord: response code={}", result.getResponseCode());
+        log.debug("Delete record response: code={}", result.getResponseCode());
         return result;
     }
 

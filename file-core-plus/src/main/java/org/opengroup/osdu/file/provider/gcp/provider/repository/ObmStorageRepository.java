@@ -53,7 +53,7 @@ public class ObmStorageRepository implements IStorageRepository {
 
   @Override
   public SignedObject createSignedObject(String bucketName, String filepath) {
-    log.info("[FILE-TEST-FLOW] ObmStorageRepo.createSignedObject: bucketName={}, filepath={}", bucketName, filepath);
+    log.debug("Creating signed object: bucket={}, filepath={}", bucketName, filepath);
     return prepareSignedObject(bucketName, filepath, ObmHttpMethod.PUT, new SignedUrlParameters());
   }
 
@@ -102,15 +102,13 @@ public class ObmStorageRepository implements IStorageRepository {
 
     ObmSignedUrlParams obmSignedUrlParams = obmSignedUrlParamsBuilder.build();
 
-    log.info("[FILE-TEST-FLOW] ObmStorageRepo.prepareSignedObject: CALLING obmDriver.getSignedUrlWithParams — "
-        + "method={}, bucket={}, fileName={}, partitionId={}, expiryDuration={}, expiryTimeUnit={}, queryParams={}",
+    log.debug("Requesting signed URL: method={}, bucket={}, key={}, partition={}, expiry={} {}",
         obmSignedUrlParams.getMethod(), obmSignedUrlParams.getBucket(), obmSignedUrlParams.getFileName(),
-        partitionId, obmSignedUrlParams.getExpiryDuration(), obmSignedUrlParams.getExpiryTimeUnit(),
-        obmSignedUrlParams.getQueryParams());
+        partitionId, obmSignedUrlParams.getExpiryDuration(), obmSignedUrlParams.getExpiryTimeUnit());
 
     URL signedUrl = obmDriver.getSignedUrlWithParams(obmSignedUrlParams);
 
-    log.info("[FILE-TEST-FLOW] ObmStorageRepo.prepareSignedObject: RESULT signedUrl={}", signedUrl);
+    log.debug("Obtained signed URL: {}", signedUrl);
 
     return SignedObject.builder()
         .url(signedUrl)

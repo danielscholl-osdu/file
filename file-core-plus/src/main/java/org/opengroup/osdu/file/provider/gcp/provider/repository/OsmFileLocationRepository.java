@@ -68,9 +68,9 @@ public class OsmFileLocationRepository implements IFileLocationRepository {
 
   @Override
   public FileLocation findByFileID(String fileID) {
-    log.info("[FILE-TEST-FLOW] OsmFileLocationRepo.findByFileID: fileID={}", fileID);
+    log.debug("Finding file location: fileID={}", fileID);
     if (Objects.isNull(fileID)) {
-      log.info("[FILE-TEST-FLOW] OsmFileLocationRepo.findByFileID: fileID is null, returning null");
+      log.debug("FileID is null, returning null");
       return null;
     }
     GetQuery<FileLocationOsm> fileLocationGetQuery =
@@ -79,18 +79,18 @@ public class OsmFileLocationRepository implements IFileLocationRepository {
     List<FileLocationOsm> resultsAsList = osmDatabaseContext.getResultsAsList(fileLocationGetQuery);
     Optional<FileLocationOsm> locationOsm = resultsAsList.stream().findFirst();
     FileLocation result = locationOsm.map(FileLocationOsm::toFileLocation).orElse(null);
-    log.info("[FILE-TEST-FLOW] OsmFileLocationRepo.findByFileID: found={}", result != null);
+    log.debug("File location lookup: fileID={}, found={}", fileID, result != null);
     return result;
   }
 
   @Override
   public FileLocation save(FileLocation fileLocation) {
-    log.info("[FILE-TEST-FLOW] OsmFileLocationRepo.save: fileID={}, location={}", fileLocation.getFileID(), fileLocation.getLocation());
+    log.debug("Saving file location: fileID={}, location={}", fileLocation.getFileID(), fileLocation.getLocation());
     this.random.setSeed(fileLocation.hashCode());
     long aLong = random.nextLong();
     FileLocationOsm fileLocationOsm = new FileLocationOsm(fileLocation, aLong);
     FileLocation saved = osmDatabaseContext.createAndGet(getDestination(), fileLocationOsm).toFileLocation();
-    log.info("[FILE-TEST-FLOW] OsmFileLocationRepo.save: COMPLETED for fileID={}", saved.getFileID());
+    log.debug("Saved file location: fileID={}", saved.getFileID());
     return saved;
   }
 

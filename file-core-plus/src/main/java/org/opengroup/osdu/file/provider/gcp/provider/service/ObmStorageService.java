@@ -82,23 +82,18 @@ public class ObmStorageService implements IStorageService {
 
   @Override
   public SignedUrl createSignedUrl(String fileName, String authorizationToken, String partitionId) {
-    log.info("[FILE-TEST-FLOW] ObmStorageService.createSignedUrl: STARTED, fileName={}, partitionId={}",
-        fileName, partitionId);
+    log.debug("Creating signed URL: fileName={}, partition={}", fileName, partitionId);
 
     String filepath = generateRelativePath(fileName);
-    log.info("[FILE-TEST-FLOW] ObmStorageService.createSignedUrl: generatedRelativePath={}", filepath);
+    log.debug("Generated relative path: {}", filepath);
 
-    String stagingBucket = partitionPropertyResolver.getOptionalPropertyValue(partitionPropertyNames.getStagingLocationName(), partitionId).orElseGet(() -> {
-      TenantInfo tenantInfo = tenantFactory.getTenantInfo(partitionId);
-      String bucket = String.format("%s-%s-%s", tenantInfo.getProjectId(), tenantInfo.getName(), properties.getStagingArea());
-      log.info("[FILE-TEST-FLOW] ObmStorageService.createSignedUrl: computed stagingBucket from tenant={}", bucket);
-      return bucket;
-    });
-    log.info("[FILE-TEST-FLOW] ObmStorageService.createSignedUrl: stagingBucket={}, filepath={}", stagingBucket, filepath);
+    String stagingBucket = partitionPropertyResolver
+        .getOptionalPropertyValue(partitionPropertyNames.getStagingLocationName(), partitionId)
+        .orElseGet(() -> defaultStagingBucketName(partitionId));
+    log.debug("Resolved staging bucket={}, filepath={}", stagingBucket, filepath);
 
     SignedObject signedObject = storageRepository.createSignedObject(stagingBucket, filepath);
-    log.info("[FILE-TEST-FLOW] ObmStorageService.createSignedUrl: signedObject.url={}, signedObject.uri={}",
-        signedObject.getUrl(), signedObject.getUri());
+    log.debug("Created signed object: url={}, uri={}", signedObject.getUrl(), signedObject.getUri());
 
     SignedUrl result = SignedUrl.builder()
         .url(signedObject.getUrl())
@@ -107,7 +102,7 @@ public class ObmStorageService implements IStorageService {
         .createdBy(dpsHeaders.getUserEmail())
         .createdAt(Instant.now(Clock.systemUTC()))
         .build();
-    log.info("[FILE-TEST-FLOW] ObmStorageService.createSignedUrl: COMPLETED, fileSource={}", result.getFileSource());
+    log.debug("Created signed URL: fileSource={}", result.getFileSource());
     return result;
   }
 
@@ -165,6 +160,11 @@ public class ObmStorageService implements IStorageService {
         .datasetRegistryId(fileRetrievalData.getRecordId())
         .providerKey(environmentResolver.getProviderKey())
         .build();
+  }
+
+  private String defaultStagingBucketName(String partitionId) {
+    TenantInfo tenantInfo = tenantFactory.getTenantInfo(partitionId);
+    return String.format("%s-%s-%s", tenantInfo.getProjectId(), tenantInfo.getName(), properties.getStagingArea());
   }
 
   private String generateRelativePath(String filename) {

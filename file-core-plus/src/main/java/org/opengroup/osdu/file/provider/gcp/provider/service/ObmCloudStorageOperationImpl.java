@@ -51,35 +51,33 @@ public class ObmCloudStorageOperationImpl implements ICloudStorageOperation {
 
   @Override
   public String copyFile(String sourceFile, String destinationFile) throws OsduBadRequestException {
-    log.info("[FILE-TEST-FLOW] ObmCloudStorageOp.copyFile: source={}, destination={}", sourceFile, destinationFile);
+    log.debug("Copying blob: source={}, destination={}", sourceFile, destinationFile);
     String partitionId = dpsHeaders.getPartitionId();
     String fromBucket = pathProvider.extractBucketInfoFromUnsignedUrl(sourceFile, partitionId).getBucketName();
     String fromPath = pathProvider.getDirectoryPath(sourceFile, partitionId);
     String destinationBucket = pathProvider.extractBucketInfoFromUnsignedUrl(destinationFile, partitionId).getBucketName();
     String destinationPath = pathProvider.getDirectoryPath(destinationFile, partitionId);
-    log.info("[FILE-TEST-FLOW] ObmCloudStorageOp.copyFile: fromBucket={}, fromPath={}, destBucket={}, destPath={}",
+    log.debug("Copying blob: sourceBucket={}, sourceKey={}, destBucket={}, destKey={}",
         fromBucket, fromPath, destinationBucket, destinationPath);
     ObmDestination obmDestination = ObmDestination.builder().partitionId(partitionId).build();
 
     if (Stream.of(fromBucket, fromPath, destinationBucket, destinationPath).anyMatch(StringUtils::isEmpty)) {
-      log.error("[FILE-TEST-FLOW] ObmCloudStorageOp.copyFile: INVALID_RESOURCE_PATH detected");
+      log.error("Invalid resource path detected during copy");
       throwBadRequest(INVALID_RESOURCE_PATH);
     }
 
-    log.info("[FILE-TEST-FLOW] ObmCloudStorageOp.copyFile: CALLING obmDriver.getBlob(bucket='{}', key='{}', partition='{}')",
-        fromBucket, fromPath, partitionId);
+    log.debug("Fetching source blob: bucket={}, key={}, partition={}", fromBucket, fromPath, partitionId);
     ObmBlob sourceBlob = obmDriver.getBlob(fromBucket, fromPath, obmDestination);
     if (sourceBlob == null) {
-      log.error("[FILE-TEST-FLOW] ObmCloudStorageOp.copyFile: source blob NOT FOUND at {}/{}", fromBucket, fromPath);
+      log.error("Source blob not found: bucket={}, key={}", fromBucket, fromPath);
       throwBadRequest(getErrorMessageFileNotPresent(fromPath),
           FileMetadataConstant.INVALID_SOURCE_EXCEPTION + sourceFile);
     }
-    log.info("[FILE-TEST-FLOW] ObmCloudStorageOp.copyFile: source blob exists, CALLING obmDriver.copyBlob("
-        + "fromBucket='{}', fromKey='{}', destBucket='{}', destKey='{}', partition='{}')",
+    log.debug("Executing blob copy: sourceBucket={}, sourceKey={}, destBucket={}, destKey={}, partition={}",
         fromBucket, fromPath, destinationBucket, destinationPath, partitionId);
 
     String copyBlobPath = obmDriver.copyBlob(obmDestination, fromBucket, fromPath, destinationBucket, destinationPath);
-    log.info("[FILE-TEST-FLOW] ObmCloudStorageOp.copyFile: COMPLETED, copyBlobPath={}", copyBlobPath);
+    log.debug("Copied blob: resultPath={}", copyBlobPath);
     return environmentResolver.getTransferProtocol(partitionId) + copyBlobPath;
   }
 
@@ -136,17 +134,14 @@ public class ObmCloudStorageOperationImpl implements ICloudStorageOperation {
 
   @Override
   public Boolean deleteFile(String location) {
-    log.info("[FILE-TEST-FLOW] ObmCloudStorageOp.deleteFile: location={}", location);
+    log.debug("Deleting blob: location={}", location);
     String partitionId = dpsHeaders.getPartitionId();
     String bucketName = pathProvider.extractBucketInfoFromUnsignedUrl(location, partitionId).getBucketName();
     String filePath = pathProvider.getDirectoryPath(location, partitionId);
-    log.info("[FILE-TEST-FLOW] ObmCloudStorageOp.deleteFile: bucketName={}, filePath={}, partitionId={}",
-        bucketName, filePath, partitionId);
-    log.info("[FILE-TEST-FLOW] ObmCloudStorageOp.deleteFile: CALLING obmDriver.deleteBlob(bucket='{}', key='{}', partition='{}')",
-        bucketName, filePath, partitionId);
+    log.debug("Deleting blob: bucket={}, key={}, partition={}", bucketName, filePath, partitionId);
 
     Boolean result = obmDriver.deleteBlob(bucketName, filePath, ObmDestination.builder().partitionId(partitionId).build());
-    log.info("[FILE-TEST-FLOW] ObmCloudStorageOp.deleteFile: result={}", result);
+    log.debug("Deleted blob: result={}", result);
     return result;
   }
 
