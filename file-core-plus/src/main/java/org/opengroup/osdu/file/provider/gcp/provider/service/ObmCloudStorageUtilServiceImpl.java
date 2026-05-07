@@ -129,7 +129,8 @@ public class ObmCloudStorageUtilServiceImpl implements IStorageUtilService {
     String partitionId = dpsHeaders.getPartitionId();
     String fromBucket = pathProvider.extractBucketInfoFromUnsignedUrl(filePath, partitionId).getBucketName();
     String fromPath = pathProvider.getDirectoryPath(filePath, partitionId);
-    log.info("[FILE-TEST-FLOW] ObmStorageUtil.getChecksum: fromBucket={}, fromPath={}", fromBucket, fromPath);
+    log.info("[FILE-TEST-FLOW] ObmStorageUtil.getChecksum: CALLING obmDriver.getBlob(bucket='{}', key='{}', partition='{}')",
+        fromBucket, fromPath, partitionId);
     ObmDestination obmDestination = ObmDestination.builder().partitionId(partitionId).build();
     ObmBlob sourceBlob = obmStorageDriver.getBlob(fromBucket, fromPath, obmDestination);
     String checksum = sourceBlob.getChecksum();

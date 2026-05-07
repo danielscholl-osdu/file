@@ -102,10 +102,15 @@ public class ObmStorageRepository implements IStorageRepository {
 
     ObmSignedUrlParams obmSignedUrlParams = obmSignedUrlParamsBuilder.build();
 
+    log.info("[FILE-TEST-FLOW] ObmStorageRepo.prepareSignedObject: CALLING obmDriver.getSignedUrlWithParams — "
+        + "method={}, bucket={}, fileName={}, partitionId={}, expiryDuration={}, expiryTimeUnit={}, queryParams={}",
+        obmSignedUrlParams.getMethod(), obmSignedUrlParams.getBucket(), obmSignedUrlParams.getFileName(),
+        partitionId, obmSignedUrlParams.getExpiryDuration(), obmSignedUrlParams.getExpiryTimeUnit(),
+        obmSignedUrlParams.getQueryParams());
+
     URL signedUrl = obmDriver.getSignedUrlWithParams(obmSignedUrlParams);
 
-    log.debug("Signed URL for created storage object. BucketName: {}, FilePath: {}, Signed URL: {}",
-        bucketName, filepath, signedUrl);
+    log.info("[FILE-TEST-FLOW] ObmStorageRepo.prepareSignedObject: RESULT signedUrl={}", signedUrl);
 
     return SignedObject.builder()
         .url(signedUrl)
