@@ -107,7 +107,7 @@ public class ObmCloudStorageUtilServiceImpl implements IStorageUtilService {
         .getOptionalPropertyValue(partitionPropertyName, partitionId)
         .orElseGet(() -> defaultBucketName(partitionId, fallbackAreaSuffix));
     // Combine into full unsigned URL: protocol + bucket + relativePath
-    String result = protocol + bucket + relativePath;
+    String result = protocol + "/" + bucket + relativePath;
     log.info("[FILE-TEST-FLOW] ObmStorageUtil.resolveLocation: partitionProp={}, bucket={}, result={}",
         partitionPropertyName, bucket, result);
     return result;
