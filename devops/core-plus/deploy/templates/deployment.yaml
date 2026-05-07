@@ -34,8 +34,6 @@ spec:
           - secretRef:
               name: {{ printf "%s-%s" .Values.global.dataPartitionId .Values.conf.s3SecretName | quote }}
           - secretRef:
-              name: {{ .Values.conf.fileMinioSecretName | quote }}
-          - secretRef:
               name: {{ .Values.conf.fileKeycloakSecretName | quote }}
           - secretRef:
               name: {{ .Values.conf.filePostgresSecretName | quote }}
@@ -53,7 +51,7 @@ spec:
             periodSeconds: 20
           readinessProbe:
             failureThreshold: 2
-            httpGet: 
+            httpGet:
               path: /health/readiness
               port: 8081
             periodSeconds: 15
