@@ -14,7 +14,7 @@
   * [Partition level secret ENV variables](#partition-level-secret-env-variables)
 * [Infrastructure config](#infrastructure-config)
   * [Postgres config](#postgres-config)
-  * [S3 config](#minio-config)
+  * [S3 config](#S3 config)
   * [RabbitMq config](#rabbitmq-config)
 * [Testing config](#testing-config)
 * [Local config](#local-config)
