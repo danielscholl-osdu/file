@@ -99,9 +99,9 @@ public class FileMetadataService {
             }
             Record fileMetadataRecord = fileMetadataRecordMapper.fileMetadataToRecord(fileMetadata);
 
-            logger.debug("Upserting record to storage: id={}", fileMetadataRecord.getId());
+            logger.info("Upserting record to storage: id={}", fileMetadataRecord.getId());
             UpsertRecords upsertRecords = dataLakeStorage.upsertRecord(fileMetadataRecord);
-            logger.debug("Upserted record: recordIds={}", upsertRecords.getRecordIds());
+            logger.info("Upserted record: recordIds={}", upsertRecords.getRecordIds());
             fileMetadataResponse.setId(upsertRecords.getRecordIds().get(0));
             fileStatusPublisher.publishSuccessStatus(upsertRecords.getRecordIds().get(0),
                     upsertRecords.getRecordIdVersions().get(0));
@@ -159,6 +159,7 @@ public class FileMetadataService {
         logger.debug("Fetching metadata: id={}", id);
         DataLakeStorageService dataLakeStorage = this.dataLakeStorageFactory.create(dpsHeaders);
         Record rec = null;
+        log.info("Fetching Record Id");
         try {
             rec = dataLakeStorage.getRecord(id);
             logger.debug("Fetched record: id={}, found={}", id, rec != null);
@@ -177,7 +178,7 @@ public class FileMetadataService {
         }
 
         if (null == rec) {
-            logger.debug("Record not found: id={}", id);
+            logger.info("Record not found: id={}", id);
             throw new NotFoundException("Record Not Found");
         }
 
@@ -225,14 +226,14 @@ public class FileMetadataService {
         String persistentLocation = storageUtilService.getPersistentLocation(filePath, dpsHeaders.getPartitionId());
         logger.debug("Deleting persistent blob: location={}", persistentLocation);
         boolean result = cloudStorageOperation.deleteFile(persistentLocation);
-        logger.debug("Deleted persistent blob: result={}", result);
+        logger.info("Deleted persistent blob: result={}", result);
     }
 
     private void deleteMetadataRecordFromStorage(String recordId) throws StorageException {
         logger.debug("Deleting storage record: id={}", recordId);
         DataLakeStorageService dataLakeStorage = this.dataLakeStorageFactory.create(dpsHeaders);
         HttpResponse response = dataLakeStorage.deleteRecord(recordId);
-        logger.debug("Delete storage record response: code={}, body={}", response.getResponseCode(), response.getBody());
+        logger.info("Delete storage record response: code={}, body={}", response.getResponseCode(), response.getBody());
         if (FileMetadataConstant.HTTP_CODE_204 != response.getResponseCode()) {
             logger.error("Failed to delete storage record: id={}, responseCode={}", recordId, response.getResponseCode());
             throw new StorageException(
