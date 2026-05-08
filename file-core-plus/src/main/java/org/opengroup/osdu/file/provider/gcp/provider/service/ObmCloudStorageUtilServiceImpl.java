@@ -108,7 +108,8 @@ public class ObmCloudStorageUtilServiceImpl implements IStorageUtilService {
         .orElseGet(() -> defaultBucketName(partitionId, fallbackAreaSuffix));
     // Combine into full unsigned URL: protocol + bucket + relativePath
     String result = protocol + "/" + bucket + relativePath;
-    log.debug("Resolved location: partitionProperty={}, bucket={}, url={}", partitionPropertyName, bucket, result);
+    log.debug("Resolved storage location: partition={}, partitionProperty={}, bucket={}, relativePath={}",
+        partitionId, partitionPropertyName, bucket, relativePath);
     return result;
   }
 
@@ -120,7 +121,6 @@ public class ObmCloudStorageUtilServiceImpl implements IStorageUtilService {
 
   @Override
   public String getChecksum(String filePath) {
-    log.debug("Computing checksum: filePath={}", filePath);
     if (Strings.isBlank(filePath)) {
       throw new OsduBadRequestException(String.format("Illegal file path argument - { %s }", filePath));
     }
@@ -128,11 +128,12 @@ public class ObmCloudStorageUtilServiceImpl implements IStorageUtilService {
     String partitionId = dpsHeaders.getPartitionId();
     String fromBucket = pathProvider.extractBucketInfoFromUnsignedUrl(filePath, partitionId).getBucketName();
     String fromPath = pathProvider.getDirectoryPath(filePath, partitionId);
-    log.debug("Fetching blob for checksum: bucket={}, key={}, partition={}", fromBucket, fromPath, partitionId);
+    log.debug("Computing checksum: bucket={}, key={}, partition={}", fromBucket, fromPath, partitionId);
     ObmDestination obmDestination = ObmDestination.builder().partitionId(partitionId).build();
     ObmBlob sourceBlob = obmStorageDriver.getBlob(fromBucket, fromPath, obmDestination);
     String checksum = sourceBlob.getChecksum();
-    log.debug("Computed checksum: value={}", checksum);
+    log.debug("Computed checksum: bucket={}, key={}, checksumPresent={}",
+        fromBucket, fromPath, Strings.isNotBlank(checksum));
     return checksum;
   }
 

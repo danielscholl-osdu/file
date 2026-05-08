@@ -68,9 +68,8 @@ public class OsmFileLocationRepository implements IFileLocationRepository {
 
   @Override
   public FileLocation findByFileID(String fileID) {
-    log.debug("Finding file location: fileID={}", fileID);
     if (Objects.isNull(fileID)) {
-      log.debug("FileID is null, returning null");
+      log.debug("Skipping file location lookup because fileID is null");
       return null;
     }
     GetQuery<FileLocationOsm> fileLocationGetQuery =
@@ -79,18 +78,19 @@ public class OsmFileLocationRepository implements IFileLocationRepository {
     List<FileLocationOsm> resultsAsList = osmDatabaseContext.getResultsAsList(fileLocationGetQuery);
     Optional<FileLocationOsm> locationOsm = resultsAsList.stream().findFirst();
     FileLocation result = locationOsm.map(FileLocationOsm::toFileLocation).orElse(null);
-    log.debug("File location lookup: fileID={}, found={}", fileID, result != null);
+    log.debug("Completed file location lookup: fileID={}, matches={}, found={}",
+        fileID, resultsAsList.size(), result != null);
     return result;
   }
 
   @Override
   public FileLocation save(FileLocation fileLocation) {
-    log.debug("Saving file location: fileID={}, location={}", fileLocation.getFileID(), fileLocation.getLocation());
     this.random.setSeed(fileLocation.hashCode());
     long aLong = random.nextLong();
     FileLocationOsm fileLocationOsm = new FileLocationOsm(fileLocation, aLong);
     FileLocation saved = osmDatabaseContext.createAndGet(getDestination(), fileLocationOsm).toFileLocation();
-    log.debug("Saved file location: fileID={}", saved.getFileID());
+    log.debug("Saved file location in OSM: fileID={}, driver={}, createdBy={}",
+        saved.getFileID(), saved.getDriver(), saved.getCreatedBy());
     return saved;
   }
 

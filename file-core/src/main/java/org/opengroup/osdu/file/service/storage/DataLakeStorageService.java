@@ -43,29 +43,26 @@ public class DataLakeStorageService {
 
     public UpsertRecords upsertRecord(Record[] records) throws StorageException {
         String url = this.createUrl("/records");
-        log.debug("Upserting records: url={}, count={}", url, records.length);
         HttpResponse result = this.httpClient
                 .send(HttpRequest.put(records).url(url).headers(this.headers.getHeaders()).build());
-        log.debug("Upsert response: code={}", result.getResponseCode());
+        log.debug("Upserted {} record(s): responseCode={}", records.length, result.getResponseCode());
         return this.getResult(result, UpsertRecords.class);
     }
 
     public Record getRecord(String id) throws StorageException {
         String url = this.createUrl(String.format("/records/%s", id));
-        log.debug("Fetching record: url={}", url);
         HttpResponse result = this.httpClient
                 .send(HttpRequest.get().url(url).headers(this.headers.getHeaders()).build());
         boolean notFound = result.IsNotFoundCode();
-        log.debug("Fetch record response: code={}, notFound={}", result.getResponseCode(), notFound);
+        log.debug("Fetched record: id={}, responseCode={}, notFound={}", id, result.getResponseCode(), notFound);
         return notFound ? null : this.getResult(result, Record.class);
     }
 
     public HttpResponse deleteRecord(String id) {
         String url = this.createUrl(String.format("/records/%s:delete", id));
-        log.debug("Deleting record: url={}", url);
         HttpResponse result = this.httpClient
                 .send(HttpRequest.post("{'anything':'anything'}").url(url).headers(this.headers.getHeaders()).build());
-        log.debug("Delete record response: code={}", result.getResponseCode());
+        log.debug("Deleted record: id={}, responseCode={}", id, result.getResponseCode());
         return result;
     }
 

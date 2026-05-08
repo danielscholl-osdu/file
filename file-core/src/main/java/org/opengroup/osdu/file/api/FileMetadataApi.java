@@ -59,13 +59,7 @@ public class FileMetadataApi {
     public ResponseEntity<FileMetadataResponse> postFilesMetadata(
             @Validated(FileMetadataValidationSequence.class) @RequestBody FileMetadata fileMetadata)
             throws OsduBadRequestException, StorageException, ApplicationException {
-        log.debug("Saving file metadata: kind={}, fileSource={}",
-            fileMetadata.getKind(),
-            fileMetadata.getData() != null && fileMetadata.getData().getDatasetProperties() != null
-                && fileMetadata.getData().getDatasetProperties().getFileSourceInfo() != null
-                ? fileMetadata.getData().getDatasetProperties().getFileSourceInfo().getFileSource() : "null");
         FileMetadataResponse response = fileMetadataService.saveMetadata(fileMetadata);
-        log.debug("Saved file metadata: id={}", response.getId());
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -104,9 +98,7 @@ public class FileMetadataApi {
     @PreAuthorize("@authorizationFilter.hasPermission('" + FileServiceRole.EDITORS + "', '" + FileServiceRole.ADMIN + "')")
     public ResponseEntity<Void> deleteFileMetadataById(@Parameter(description = "File metadata record Id.")  @PathVariable("id") String id)
             throws OsduBadRequestException, ApplicationException, NotFoundException, StorageException {
-        log.debug("Deleting file metadata: id={}", id);
         fileMetadataService.deleteMetadataRecord(id);
-        log.debug("Deleted file metadata: id={}", id);
         return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
     }
 }

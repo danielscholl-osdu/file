@@ -53,7 +53,6 @@ public class ObmStorageRepository implements IStorageRepository {
 
   @Override
   public SignedObject createSignedObject(String bucketName, String filepath) {
-    log.debug("Creating signed object: bucket={}, filepath={}", bucketName, filepath);
     return prepareSignedObject(bucketName, filepath, ObmHttpMethod.PUT, new SignedUrlParameters());
   }
 
@@ -71,7 +70,6 @@ public class ObmStorageRepository implements IStorageRepository {
   private SignedObject prepareSignedObject(
       String bucketName, String filepath, ObmHttpMethod httpMethod,
       SignedUrlParameters signedUrlParameters) {
-    log.debug("Creating the signed blob in bucket {} for path {}", bucketName, filepath);
     String partitionId = dpsHeaders.getPartitionId();
 
     ExpiryTimeUtil.RelativeTimeValue expiryTimeInTimeUnit = expiryTimeUtil
@@ -102,17 +100,20 @@ public class ObmStorageRepository implements IStorageRepository {
 
     ObmSignedUrlParams obmSignedUrlParams = obmSignedUrlParamsBuilder.build();
 
-    log.debug("Requesting signed URL: method={}, bucket={}, key={}, partition={}, expiry={} {}",
+    log.debug("Requesting OBM signed URL: method={}, bucket={}, key={}, partition={}, expiry={} {}, contentDisposition={}, contentType={}",
         obmSignedUrlParams.getMethod(), obmSignedUrlParams.getBucket(), obmSignedUrlParams.getFileName(),
-        partitionId, obmSignedUrlParams.getExpiryDuration(), obmSignedUrlParams.getExpiryTimeUnit());
+        partitionId, obmSignedUrlParams.getExpiryDuration(), obmSignedUrlParams.getExpiryTimeUnit(),
+        Objects.nonNull(fileName) && !fileName.isEmpty(), Objects.nonNull(contentType) && !contentType.isEmpty());
 
     URL signedUrl = obmDriver.getSignedUrlWithParams(obmSignedUrlParams);
+    URI objectUri = getObjectUri(bucketName, filepath, partitionId);
 
-    log.debug("Obtained signed URL: {}", signedUrl);
+    log.debug("Created OBM signed object: method={}, bucket={}, key={}, uri={}",
+        httpMethod, bucketName, filepath, objectUri);
 
     return SignedObject.builder()
         .url(signedUrl)
-        .uri(getObjectUri(bucketName, filepath, partitionId))
+        .uri(objectUri)
         .build();
   }
 
