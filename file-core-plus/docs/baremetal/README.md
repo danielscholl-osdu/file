@@ -14,7 +14,7 @@
   * [Partition level secret ENV variables](#partition-level-secret-env-variables)
 * [Infrastructure config](#infrastructure-config)
   * [Postgres config](#postgres-config)
-  * [S3 config](#S3 config)
+  * [S3 config](#s3-config)
   * [RabbitMq config](#rabbitmq-config)
 * [Testing config](#testing-config)
 * [Local config](#local-config)
@@ -127,30 +127,30 @@ Example:
     }
 ```
 
-| name                               | description                                                                                                                           |
-|------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `osm.postgres.datasource.url`      | Postgres url                                                                                                                          |
-| `osm.postgres.datasource.username` | Postgres username                                                                                                                     |
-| `osm.postgres.datasource.password` | Postgres password                                                                                                                     |
-| `oqm.rabbitmq.amqp.password`       | Amqp username                                                                                                                         |
-| `oqm.rabbitmq.amqp.password`       | Amqp password                                                                                                                         |
-| `oqm.rabbitmq.admin.username`      | Amqp admin username                                                                                                                   |
-| `oqm.rabbitmq.admin.password`      | Amqp admin password                                                                                                                   |
-| `obm.s3.endpoint`                  | server URL
-| `obm.s3.accessKey`                 | server accessKey
-| `obm.s3.secretKey`                 | server secretKey
-| `obm.s3.region`                    | server region
-| `oqm.rabbitmq.amqp.host`           | messaging hostname or IP                                                                                                              |
-| `oqm.rabbitmq.amqp.port`           | - port                                                                                                                                |
-| `oqm.rabbitmq.amqp.path`           | - path                                                                                                                                |
-| `oqm.rabbitmq.amqp.username`       | - username                                                                                                                            |
-| `oqm.rabbitmq.amqp.password`       | - password                                                                                                                            |
-| `oqm.rabbitmq.admin.schema`        | admin host schema                                                                                                                     |
-| `oqm.rabbitmq.admin.host`          | - host name                                                                                                                           |
-| `oqm.rabbitmq.admin.port`          | - port                                                                                                                                |
-| `oqm.rabbitmq.admin.path`          | - path                                                                                                                                |
-| `oqm.rabbitmq.admin.username`      | - username                                                                                                                            |
-| `oqm.rabbitmq.admin.password`      | - password                                                                                                                            |
+| name                               | description              |
+|------------------------------------|--------------------------|
+| `osm.postgres.datasource.url`      | Postgres url             |
+| `osm.postgres.datasource.username` | Postgres username        |
+| `osm.postgres.datasource.password` | Postgres password        |
+| `oqm.rabbitmq.amqp.password`       | Amqp username            |
+| `oqm.rabbitmq.amqp.password`       | Amqp password            |
+| `oqm.rabbitmq.admin.username`      | Amqp admin username      |
+| `oqm.rabbitmq.admin.password`      | Amqp admin password      |
+| `obm.s3.endpoint`                  | server URL               |
+| `obm.s3.accessKey`                 | server accessKey         |
+| `obm.s3.secretKey`                 | server secretKey         |
+| `obm.s3.region`                    | server region            |
+| `oqm.rabbitmq.amqp.host`           | messaging hostname or IP |
+| `oqm.rabbitmq.amqp.port`           | - port                   |
+| `oqm.rabbitmq.amqp.path`           | - path                   |
+| `oqm.rabbitmq.amqp.username`       | - username               |
+| `oqm.rabbitmq.amqp.password`       | - password               |
+| `oqm.rabbitmq.admin.schema`        | admin host schema        |
+| `oqm.rabbitmq.admin.host`          | - host name              |
+| `oqm.rabbitmq.admin.port`          | - port                   |
+| `oqm.rabbitmq.admin.path`          | - path                   |
+| `oqm.rabbitmq.admin.username`      | - username               |
+| `oqm.rabbitmq.admin.password`      | - password               |
 
 ### Partition level secret ENV variables
 | name                                          | value                        | description                         |
