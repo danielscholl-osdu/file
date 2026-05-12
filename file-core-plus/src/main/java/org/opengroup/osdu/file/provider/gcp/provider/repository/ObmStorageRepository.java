@@ -17,8 +17,6 @@
 
 package org.opengroup.osdu.file.provider.gcp.provider.repository;
 
-import static java.lang.String.format;
-
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
@@ -33,6 +31,7 @@ import org.opengroup.osdu.core.obm.core.model.ObmSignedUrlParams;
 import org.opengroup.osdu.core.obm.core.persistence.ObmDestination;
 import org.opengroup.osdu.file.model.SignedObject;
 import org.opengroup.osdu.file.model.SignedUrlParameters;
+import org.opengroup.osdu.file.provider.gcp.provider.util.ObmStorageUrlBuilder;
 import org.opengroup.osdu.file.provider.interfaces.IStorageRepository;
 import org.opengroup.osdu.file.util.ExpiryTimeUtil;
 import org.springframework.stereotype.Component;
@@ -118,11 +117,8 @@ public class ObmStorageRepository implements IStorageRepository {
   }
 
   private URI getObjectUri(String bucketName, String filePath, String partitionId) {
-    String transferProtocol = environmentResolver.getTransferProtocol(partitionId);
-    if (!transferProtocol.endsWith("/")) {
-      transferProtocol = transferProtocol + "/";
-    }
-    return URI.create(format("%s%s/%s", transferProtocol, bucketName, filePath));
+    return URI.create(ObmStorageUrlBuilder
+        .buildUnsignedUrl(environmentResolver.getTransferProtocol(partitionId), bucketName, filePath));
   }
 
   /**

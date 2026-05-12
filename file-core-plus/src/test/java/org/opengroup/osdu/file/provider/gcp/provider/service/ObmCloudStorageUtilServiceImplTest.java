@@ -112,4 +112,15 @@ class ObmCloudStorageUtilServiceImplTest {
     assertEquals("abc123", checksum);
     verify(obmStorageDriver).getBlob(eq(STAGING_BUCKET), eq("uuid/fileId"), any());
   }
+
+  @Test
+  void getStagingLocationShouldNotCreateDoubleSlashWhenProtocolAlreadyEndsWithSlash() {
+    given(partitionPropertyResolver.getOptionalPropertyValue(STAGING_PROPERTY, PARTITION_ID))
+        .willReturn(Optional.of(STAGING_BUCKET));
+    given(environmentResolver.getTransferProtocol(PARTITION_ID)).willReturn(TRANSFER_PROTOCOL + "/");
+
+    String location = storageUtilService.getStagingLocation(RELATIVE_PATH, PARTITION_ID);
+
+    assertEquals(TRANSFER_PROTOCOL + "/" + STAGING_BUCKET + RELATIVE_PATH, location);
+  }
 }

@@ -35,6 +35,7 @@ import org.opengroup.osdu.file.constant.ChecksumAlgorithm;
 import org.opengroup.osdu.file.exception.OsduBadRequestException;
 import org.opengroup.osdu.file.provider.gcp.config.PartitionPropertyNames;
 import org.opengroup.osdu.file.provider.gcp.config.PropertiesConfiguration;
+import org.opengroup.osdu.file.provider.gcp.provider.util.ObmStorageUrlBuilder;
 import org.opengroup.osdu.file.provider.interfaces.IStorageUtilService;
 import org.springframework.stereotype.Component;
 
@@ -101,13 +102,12 @@ public class ObmCloudStorageUtilServiceImpl implements IStorageUtilService {
                                  String partitionId,
                                  String partitionPropertyName,
                                  String fallbackAreaSuffix) {
-    String protocol = environmentResolver.getTransferProtocol(partitionId);
+    String transferProtocol = environmentResolver.getTransferProtocol(partitionId);
     // Resolve bucket name: partition property takes priority, otherwise derive from tenant info
     String bucket = partitionPropertyResolver
         .getOptionalPropertyValue(partitionPropertyName, partitionId)
         .orElseGet(() -> defaultBucketName(partitionId, fallbackAreaSuffix));
-    // Combine into full unsigned URL: protocol + bucket + relativePath
-    String result = protocol + "/" + bucket + relativePath;
+    String result = ObmStorageUrlBuilder.buildUnsignedUrl(transferProtocol, bucket, relativePath);
     log.debug("Resolved storage location: partition={}, partitionProperty={}, bucket={}, relativePath={}",
         partitionId, partitionPropertyName, bucket, relativePath);
     return result;
