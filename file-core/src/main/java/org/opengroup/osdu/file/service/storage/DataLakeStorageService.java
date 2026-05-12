@@ -11,14 +11,11 @@ import org.opengroup.osdu.core.common.model.storage.MultiRecordInfo;
 import org.opengroup.osdu.core.common.util.UrlNormalizationUtil;
 import org.opengroup.osdu.file.model.storage.Record;
 import org.opengroup.osdu.file.model.storage.UpsertRecords;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
 public class DataLakeStorageService {
-    private static final Logger log = LoggerFactory.getLogger(DataLakeStorageService.class);
     private final String storageServiceBaseUrl;
     private final IHttpClient httpClient;
     private final DpsHeaders headers;
@@ -45,7 +42,6 @@ public class DataLakeStorageService {
         String url = this.createUrl("/records");
         HttpResponse result = this.httpClient
                 .send(HttpRequest.put(records).url(url).headers(this.headers.getHeaders()).build());
-        log.debug("Upserted {} record(s): responseCode={}", records.length, result.getResponseCode());
         return this.getResult(result, UpsertRecords.class);
     }
 
@@ -53,16 +49,13 @@ public class DataLakeStorageService {
         String url = this.createUrl(String.format("/records/%s", id));
         HttpResponse result = this.httpClient
                 .send(HttpRequest.get().url(url).headers(this.headers.getHeaders()).build());
-        boolean notFound = result.IsNotFoundCode();
-        log.debug("Fetched record: id={}, responseCode={}, notFound={}", id, result.getResponseCode(), notFound);
-        return notFound ? null : this.getResult(result, Record.class);
+        return result.IsNotFoundCode() ? null : this.getResult(result, Record.class);
     }
 
     public HttpResponse deleteRecord(String id) {
         String url = this.createUrl(String.format("/records/%s:delete", id));
         HttpResponse result = this.httpClient
                 .send(HttpRequest.post("{'anything':'anything'}").url(url).headers(this.headers.getHeaders()).build());
-        log.debug("Deleted record: id={}, responseCode={}", id, result.getResponseCode());
         return result;
     }
 

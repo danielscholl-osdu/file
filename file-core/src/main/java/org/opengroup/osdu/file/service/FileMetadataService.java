@@ -44,14 +44,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Service
 @RequiredArgsConstructor
 public class FileMetadataService {
-
-    private static final Logger logger = LoggerFactory.getLogger(FileMetadataService.class);
 
     final JaxRsDpsLog log;
     final DataLakeStorageFactory dataLakeStorageFactory;
@@ -79,16 +75,16 @@ public class FileMetadataService {
 
             DataLakeStorageService dataLakeStorage = this.dataLakeStorageFactory.create(dpsHeaders);
             filePath = fileMetadata.getData().getDatasetProperties().getFileSourceInfo().getFileSource();
-            logger.info("Saving file metadata: partition={}, kind={}, fileSource={}",
-                    dpsHeaders.getPartitionId(), fileMetadata.getKind(), filePath);
+            log.info("Saving file metadata: partition=" + dpsHeaders.getPartitionId()
+                    + ", kind=" + fileMetadata.getKind() + ", fileSource=" + filePath);
             fileMetadata.setId(fileMetadataUtil.generateRecordId(dpsHeaders.getPartitionId(),
                     fetchEntityFromKind(fileMetadata.getKind())));
             recordId = fileMetadata.getId();
 
             stagingLocation = storageUtilService.getStagingLocation(filePath, dpsHeaders.getPartitionId());
             persistentLocation = storageUtilService.getPersistentLocation(filePath, dpsHeaders.getPartitionId());
-            logger.debug("Prepared metadata save: recordId={}, stagingLocation={}, persistentLocation={}",
-                    recordId, stagingLocation, persistentLocation);
+            log.debug("Prepared metadata save: recordId=" + recordId + ", stagingLocation=" + stagingLocation
+                    + ", persistentLocation=" + persistentLocation);
 
             cloudStorageOperation.copyFile(stagingLocation, persistentLocation);
             String checksum = storageUtilService.getChecksum(persistentLocation);
@@ -98,8 +94,9 @@ public class FileMetadataService {
               fileSourceInfo.setChecksum(checksum);
               fileSourceInfo.setChecksumAlgorithm(checksumAlgorithm);
             }
-            logger.debug("Prepared persistent file for metadata save: recordId={}, checksumPresent={}, checksumAlgorithm={}",
-                    recordId, StringUtils.isNotBlank(checksum), checksumAlgorithm);
+            log.debug("Prepared persistent file for metadata save: recordId=" + recordId
+                    + ", checksumPresent=" + StringUtils.isNotBlank(checksum)
+                    + ", checksumAlgorithm=" + checksumAlgorithm);
             Record fileMetadataRecord = fileMetadataRecordMapper.fileMetadataToRecord(fileMetadata);
 
             UpsertRecords upsertRecords = dataLakeStorage.upsertRecord(fileMetadataRecord);
@@ -113,29 +110,29 @@ public class FileMetadataService {
              * Issue: https://community.opengroup.org/osdu/platform/system/file/-/issues/76
              * Resolution:
              * 1. Check the staging file exists
-             * 2. Catch deletion failures and ignore them as deletion failure should not
-             *    invalidate the call to save metadata
-             * 3. Delete should be the last step of metadata save process
-             * */
+            * 2. Catch deletion failures and ignore them as deletion failure should not
+            *    invalidate the call to save metadata
+            * 3. Delete should be the last step of metadata save process
+            * */
             cleanupStagingLocation(stagingLocation, dataLakeStorage, fileMetadataRecord);
-            logger.info("Saved file metadata: recordId={}, recordVersion={}, checksumPresent={}",
-                    upsertRecords.getRecordIds().get(0), upsertRecords.getRecordIdVersions().get(0),
-                    StringUtils.isNotBlank(checksum));
+            log.info("Saved file metadata: recordId=" + upsertRecords.getRecordIds().get(0)
+                    + ", recordVersion=" + upsertRecords.getRecordIdVersions().get(0)
+                    + ", checksumPresent=" + StringUtils.isNotBlank(checksum));
         } catch (StorageException e) {
-            logger.error("Storage failure while saving metadata: recordId={}, fileSource={}, persistentLocation={}, responseCode={}",
-                    recordId, filePath, persistentLocation,
-                    e.getHttpResponse() != null ? e.getHttpResponse().getResponseCode() : null, e);
+            log.error("Storage failure while saving metadata: recordId=" + recordId + ", fileSource=" + filePath
+                    + ", persistentLocation=" + persistentLocation + ", responseCode="
+                    + (e.getHttpResponse() != null ? e.getHttpResponse().getResponseCode() : null), e);
             cloudStorageOperation.deleteFile(persistentLocation);
             fileStatusPublisher.publishFailureStatus(e.getHttpResponse());
             throw e;
         } catch (OsduBadRequestException e) {
-            logger.error("Bad request while saving metadata: recordId={}, kind={}, fileSource={}",
-                    recordId, fileMetadata.getKind(), filePath, e);
+            log.error("Bad request while saving metadata: recordId=" + recordId + ", kind="
+                    + fileMetadata.getKind() + ", fileSource=" + filePath, e);
             fileStatusPublisher.publishFailureStatus(e.getMessage(), HttpStatus.BAD_REQUEST.value());
             throw e;
         } catch (Exception e) {
-            logger.error("Unexpected failure while saving metadata: recordId={}, fileSource={}, persistentLocation={}",
-                    recordId, filePath, persistentLocation, e);
+            log.error("Unexpected failure while saving metadata: recordId=" + recordId + ", fileSource=" + filePath
+                    + ", persistentLocation=" + persistentLocation, e);
             cloudStorageOperation.deleteFile(persistentLocation);
             fileStatusPublisher.publishFailureStatus(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
             throw new ApplicationException("Error occurred while creating file metadata", e);
@@ -147,32 +144,32 @@ public class FileMetadataService {
       try{
         if(dataLakeStorage.getRecord(fileMetadataRecord.getId()) != null) {
           boolean deleted = cloudStorageOperation.deleteFile(stagingLocation);
-          logger.debug("Staging cleanup completed: recordId={}, stagingLocation={}, deleted={}",
-                  fileMetadataRecord.getId(), stagingLocation, deleted);
+          log.debug("Staging cleanup completed: recordId=" + fileMetadataRecord.getId()
+                  + ", stagingLocation=" + stagingLocation + ", deleted=" + deleted);
         } else {
-          logger.debug("Skipping staging cleanup because record was not found after upsert: recordId={}",
-                  fileMetadataRecord.getId());
+          log.debug("Skipping staging cleanup because record was not found after upsert: recordId="
+                  + fileMetadataRecord.getId());
         }
       }
       catch (Exception e){
-        logger.warn("Staging cleanup failed: recordId={}, stagingLocation={}",
-                fileMetadataRecord.getId(), stagingLocation, e);
+        log.warning("Staging cleanup failed: recordId=" + fileMetadataRecord.getId()
+                + ", stagingLocation=" + stagingLocation, e);
       }
     }
 
     public RecordVersion getMetadataById(String id)
             throws OsduBadRequestException, NotFoundException, ApplicationException, StorageException {
-        logger.debug("Fetching metadata: id={}", id);
+        log.debug("Fetching metadata: id=" + id);
         DataLakeStorageService dataLakeStorage = this.dataLakeStorageFactory.create(dpsHeaders);
         Record rec = null;
         log.info("Fetching Record Id");
         try {
             rec = dataLakeStorage.getRecord(id);
-            logger.debug("Fetched record: id={}, found={}", id, rec != null);
+            log.debug("Fetched record: id=" + id + ", found=" + (rec != null));
 
         } catch (StorageException storageExc) {
-            logger.error("Storage error fetching record: id={}, responseCode={}",
-                id, storageExc.getHttpResponse() != null ? storageExc.getHttpResponse().getResponseCode() : "null");
+            log.error("Storage error fetching record: id=" + id + ", responseCode="
+                + (storageExc.getHttpResponse() != null ? storageExc.getHttpResponse().getResponseCode() : "null"));
 
             HttpResponse response = storageExc.getHttpResponse();
             if (FileMetadataConstant.HTTP_CODE_400 == response.getResponseCode()) {
@@ -184,15 +181,17 @@ public class FileMetadataService {
         }
 
         if (null == rec) {
-            logger.info("Record not found: id={}", id);
+            log.info("Record not found: id=" + id);
             throw new NotFoundException("Record Not Found");
         }
 
         RecordVersion result = fileMetadataRecordMapper.recordToRecordVersion(rec);
-        String fileSource = result.getData() != null && result.getData().getDatasetProperties() != null
-                && result.getData().getDatasetProperties().getFileSourceInfo() != null
-                ? result.getData().getDatasetProperties().getFileSourceInfo().getFileSource() : "null";
-        logger.debug("Fetched metadata: id={}, fileSource={}", id, fileSource);
+        FileSourceInfo fileSourceInfo = result.getData() != null
+                && result.getData().getDatasetProperties() != null
+                ? result.getData().getDatasetProperties().getFileSourceInfo()
+                : null;
+        String fileSource = fileSourceInfo != null ? fileSourceInfo.getFileSource() : "null";
+        log.debug("Fetched metadata: id=" + id + ", fileSource=" + fileSource);
         return result;
     }
 
@@ -216,31 +215,33 @@ public class FileMetadataService {
 
     public void deleteMetadataRecord(String recordId)
             throws OsduBadRequestException, StorageException, NotFoundException, ApplicationException {
-        logger.info("Deleting file metadata: recordId={}", recordId);
+        log.info(FileMetadataConstant.METADATA_DELETE_STARTED);
+        log.info("Deleting file metadata: recordId=" + recordId);
         RecordVersion metaRecord = this.getMetadataById(recordId);
         deleteMetadataRecordFromStorage(recordId);
         deleteFileFromPersistentLocation(metaRecord);
-        logger.info("Deleted file metadata: recordId={}", recordId);
+        log.info("Deleted file metadata: recordId=" + recordId);
     }
 
     private void deleteFileFromPersistentLocation(RecordVersion metaRecord) {
         String filePath = metaRecord.getData().getDatasetProperties().getFileSourceInfo().getFileSource();
         String persistentLocation = storageUtilService.getPersistentLocation(filePath, dpsHeaders.getPartitionId());
         boolean result = cloudStorageOperation.deleteFile(persistentLocation);
-        logger.debug("Deleted persistent blob: recordId={}, persistentLocation={}, deleted={}",
-                metaRecord.getId(), persistentLocation, result);
+        log.debug("Deleted persistent blob: recordId=" + metaRecord.getId()
+                + ", persistentLocation=" + persistentLocation + ", deleted=" + result);
     }
 
     private void deleteMetadataRecordFromStorage(String recordId) throws StorageException {
         DataLakeStorageService dataLakeStorage = this.dataLakeStorageFactory.create(dpsHeaders);
         HttpResponse response = dataLakeStorage.deleteRecord(recordId);
         if (FileMetadataConstant.HTTP_CODE_204 != response.getResponseCode()) {
-            logger.error("Failed to delete storage record: id={}, responseCode={}", recordId, response.getResponseCode());
+            log.error("Failed to delete storage record: id=" + recordId + ", responseCode="
+                    + response.getResponseCode());
             throw new StorageException(
                     "Unable to delete metadata record from storage. Check the inner HttpResponse for more info.",
                     response);
         }
-        logger.debug("Deleted storage record: id={}, responseCode={}", recordId, response.getResponseCode());
+        log.debug("Deleted storage record: id=" + recordId + ", responseCode=" + response.getResponseCode());
     }
 
 }
