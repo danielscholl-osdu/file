@@ -82,27 +82,25 @@ public class ObmStorageService implements IStorageService {
 
   @Override
   public SignedUrl createSignedUrl(String fileName, String authorizationToken, String partitionId) {
-    log.debug("Creating the signed blob for fileName : {}. Authorization : {}, partitionId : {}",
-        fileName, authorizationToken, partitionId);
-
     String filepath = generateRelativePath(fileName);
-
-    String stagingBucket = partitionPropertyResolver.getOptionalPropertyValue(partitionPropertyNames.getStagingLocationName(), partitionId).orElseGet(() -> {
-      TenantInfo tenantInfo = tenantFactory.getTenantInfo(partitionId);
-      return String.format("%s-%s-%s", tenantInfo.getProjectId(), tenantInfo.getName(), properties.getStagingArea());
-    });
-    log.debug("Create storage object for fileName {} in bucket {} with filepath {}",
-        fileName, stagingBucket, filepath);
+    String stagingBucket = partitionPropertyResolver
+        .getOptionalPropertyValue(partitionPropertyNames.getStagingLocationName(), partitionId)
+        .orElseGet(() -> defaultStagingBucketName(partitionId));
+    log.debug("Creating signed URL: fileName={}, partition={}, stagingBucket={}, relativePath={}",
+        fileName, partitionId, stagingBucket, filepath);
 
     SignedObject signedObject = storageRepository.createSignedObject(stagingBucket, filepath);
 
-    return SignedUrl.builder()
+    SignedUrl result = SignedUrl.builder()
         .url(signedObject.getUrl())
         .uri(signedObject.getUri())
         .fileSource("/" + filepath)
         .createdBy(dpsHeaders.getUserEmail())
         .createdAt(Instant.now(Clock.systemUTC()))
         .build();
+    log.debug("Created signed URL: fileName={}, partition={}, fileSource={}, createdBy={}",
+        fileName, partitionId, result.getFileSource(), result.getCreatedBy());
+    return result;
   }
 
   @Override
@@ -159,6 +157,11 @@ public class ObmStorageService implements IStorageService {
         .datasetRegistryId(fileRetrievalData.getRecordId())
         .providerKey(environmentResolver.getProviderKey())
         .build();
+  }
+
+  private String defaultStagingBucketName(String partitionId) {
+    TenantInfo tenantInfo = tenantFactory.getTenantInfo(partitionId);
+    return String.format("%s-%s-%s", tenantInfo.getProjectId(), tenantInfo.getName(), properties.getStagingArea());
   }
 
   private String generateRelativePath(String filename) {

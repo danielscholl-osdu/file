@@ -129,7 +129,8 @@ public class FileLocationApi {
     SignedUrlParameters signedUrlParameters = new SignedUrlParameters(expiryTime);
     LocationRequest req = (new ObjectMapper()).readValue("{}", LocationRequest.class);
     LocationResponse locationResponse = locationService.getLocation(req, headers, signedUrlParameters);
-    log.debug("Location result ready : {}", locationResponse);
+    log.debug("Generated upload URL: fileID={}, location={}, expiryTime={}",
+        locationResponse != null ? locationResponse.getFileID() : "null", expiryTime);
     return locationResponse;
   }
 

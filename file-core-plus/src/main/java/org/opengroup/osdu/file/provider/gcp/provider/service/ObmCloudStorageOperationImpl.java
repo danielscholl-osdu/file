@@ -56,19 +56,27 @@ public class ObmCloudStorageOperationImpl implements ICloudStorageOperation {
     String fromPath = pathProvider.getDirectoryPath(sourceFile, partitionId);
     String destinationBucket = pathProvider.extractBucketInfoFromUnsignedUrl(destinationFile, partitionId).getBucketName();
     String destinationPath = pathProvider.getDirectoryPath(destinationFile, partitionId);
+    log.debug("Copying blob: sourceBucket={}, sourceKey={}, destBucket={}, destKey={}, partition={}",
+        fromBucket, fromPath, destinationBucket, destinationPath, partitionId);
     ObmDestination obmDestination = ObmDestination.builder().partitionId(partitionId).build();
 
     if (Stream.of(fromBucket, fromPath, destinationBucket, destinationPath).anyMatch(StringUtils::isEmpty)) {
+      log.error("Invalid resource path detected during copy");
       throwBadRequest(INVALID_RESOURCE_PATH);
     }
 
     ObmBlob sourceBlob = obmDriver.getBlob(fromBucket, fromPath, obmDestination);
     if (sourceBlob == null) {
+      log.error("Source blob not found: bucket={}, key={}", fromBucket, fromPath);
       throwBadRequest(getErrorMessageFileNotPresent(fromPath),
           FileMetadataConstant.INVALID_SOURCE_EXCEPTION + sourceFile);
     }
+    log.debug("Executing blob copy: sourceBucket={}, sourceKey={}, destBucket={}, destKey={}, partition={}",
+        fromBucket, fromPath, destinationBucket, destinationPath, partitionId);
 
     String copyBlobPath = obmDriver.copyBlob(obmDestination, fromBucket, fromPath, destinationBucket, destinationPath);
+    log.debug("Copied blob: sourceBucket={}, sourceKey={}, destBucket={}, destKey={}, resultPath={}",
+        fromBucket, fromPath, destinationBucket, destinationPath, copyBlobPath);
     return environmentResolver.getTransferProtocol(partitionId) + copyBlobPath;
   }
 
@@ -79,7 +87,8 @@ public class ObmCloudStorageOperationImpl implements ICloudStorageOperation {
         this.copyFile(operation.getSourcePath(), operation.getDestinationPath());
         return FileCopyOperationResponse.builder().copyOperation(operation).success(Boolean.TRUE).build();
       } catch (OsduBadRequestException e) {
-        log.error("Error in performing file copy operation", e);
+        log.error("File copy operation failed: source={}, destination={}",
+            operation.getSourcePath(), operation.getDestinationPath(), e);
         return FileCopyOperationResponse.builder().copyOperation(operation).success(Boolean.FALSE).build();
       }
     }).collect(Collectors.toList());
@@ -92,7 +101,8 @@ public class ObmCloudStorageOperationImpl implements ICloudStorageOperation {
         this.copyDirectory(operation.getSourcePath(), operation.getDestinationPath());
         return DatasetCopyOperation.builder().fileCopyOperation(operation).success(Boolean.TRUE).build();
       } catch (OsduBadRequestException | ObmDriverRuntimeException e) {
-        log.error("Error in performing file copy operation", e);
+        log.error("Directory copy operation failed: source={}, destination={}",
+            operation.getSourcePath(), operation.getDestinationPath(), e);
         return DatasetCopyOperation.builder().fileCopyOperation(operation).success(Boolean.FALSE).build();
       }
     }).collect(Collectors.toList());
@@ -119,17 +129,27 @@ public class ObmCloudStorageOperationImpl implements ICloudStorageOperation {
 
     String transferProtocol = environmentResolver.getTransferProtocol(partitionId);
 
-    return obmDriver.copyBlobs(obmDestination, fromBucket, fromPath, destinationBucket, destinationFilePath).stream()
-        .map(filePath -> transferProtocol + filePath).collect(Collectors.toList());
+    List<String> copiedPaths = obmDriver.copyBlobs(obmDestination,
+            fromBucket, fromPath,
+            destinationBucket, destinationFilePath)
+        .stream()
+        .map(filePath -> transferProtocol + filePath)
+        .collect(Collectors.toList());
+    log.debug("Copied directory: sourceBucket={}, sourcePrefix={}, destBucket={}, destPrefix={}, copiedCount={}",
+        fromBucket, fromPath, destinationBucket, destinationFilePath, copiedPaths.size());
+    return copiedPaths;
   }
 
   @Override
   public Boolean deleteFile(String location) {
     String partitionId = dpsHeaders.getPartitionId();
     String bucketName = pathProvider.extractBucketInfoFromUnsignedUrl(location, partitionId).getBucketName();
-    String filePath = location.split(bucketName)[1];
+    String filePath = pathProvider.getDirectoryPath(location, partitionId);
+    log.debug("Deleting blob: bucket={}, key={}, partition={}", bucketName, filePath, partitionId);
 
-    return obmDriver.deleteBlob(bucketName, filePath, ObmDestination.builder().partitionId(partitionId).build());
+    Boolean result = obmDriver.deleteBlob(bucketName, filePath, ObmDestination.builder().partitionId(partitionId).build());
+    log.debug("Deleted blob: bucket={}, key={}, deleted={}", bucketName, filePath, result);
+    return result;
   }
 
   private void throwBadRequest(String errorMessage, String errorMessageLog) throws OsduBadRequestException {

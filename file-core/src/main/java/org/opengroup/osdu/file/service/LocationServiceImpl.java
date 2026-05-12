@@ -59,16 +59,18 @@ public class LocationServiceImpl implements ILocationService {
   @Override
   public LocationResponse getLocation(LocationRequest request, DpsHeaders headers,
                                       SignedUrlParameters signedUrlParameters) {
-    log.debug("Request to create location for file upload with parameters : {}", request);
     validationService.validateLocationRequest(request);
     checkExisting(request);
 
     String fileID = getFileID(request);
+    log.info("Creating upload location: fileID={}, partition={}, expiryTime={}",
+        fileID, headers.getPartitionIdWithFallbackToAccountId(),
+        signedUrlParameters != null ? signedUrlParameters.getExpiryTime() : null);
 
-    log.debug("Create the empty blob in bucket. FileID : {}", fileID);
     SignedUrl signedUrl = storageService.createSignedUrl(fileID, headers.getAuthorization(),
         headers.getPartitionIdWithFallbackToAccountId(), signedUrlParameters);
-    log.debug("Signed URL for fileID = {} : {}", fileID, signedUrl);
+    log.debug("Created signed URL for upload location: fileID={}, uri={}, fileSource={}",
+        fileID, signedUrl.getUri(), signedUrl.getFileSource());
 
     FileLocation fileLocation = FileLocation.builder()
         .fileID(fileID)
@@ -78,17 +80,16 @@ public class LocationServiceImpl implements ILocationService {
         .createdAt(Date.from(signedUrl.getCreatedAt()))
         .build();
 
-    log.debug("Save file location document : {}", fileLocation);
     FileLocation saved = fileLocationRepository.save(fileLocation);
 
     LocationResponse response = locationMapper.buildLocationResponse(signedUrl, saved);
-    log.debug("Location creation result : {}", response);
+    log.info("Created upload location: fileID={}, driver={}, createdBy={}",
+        saved.getFileID(), saved.getDriver(), saved.getCreatedBy());
     return response;
   }
 
   @Override
   public FileLocationResponse getFileLocation(FileLocationRequest request, DpsHeaders headers) {
-    log.debug("Request file location with parameters : {}", request);
     validationService.validateFileLocationRequest(request);
 
     String fileID = request.getFileID();
@@ -104,7 +105,7 @@ public class LocationServiceImpl implements ILocationService {
         .location(fileLocation.getLocation())
         .build();
 
-    log.debug("File Location result : {}", response);
+    log.info("Fetched file location: fileID={}, driver={}", fileID, response.getDriver());
     return response;
   }
 

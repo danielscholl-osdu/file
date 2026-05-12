@@ -6,7 +6,7 @@ ENV PROVIDER_NAME core-plus
 # Copy plugins
 COPY tmp/os-osm-postgres-*.jar plugins/osm-postgres.jar
 COPY tmp/os-oqm-rabbitmq-*.jar plugins/oqm-rabbitmq.jar
-COPY tmp/os-obm-minio-*.jar plugins/osm-minio.jar
+COPY tmp/os-obm-s3-*.jar plugins/obm-s3.jar
 
 
 

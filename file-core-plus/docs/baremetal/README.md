@@ -14,7 +14,7 @@
   * [Partition level secret ENV variables](#partition-level-secret-env-variables)
 * [Infrastructure config](#infrastructure-config)
   * [Postgres config](#postgres-config)
-  * [Minio config](#minio-config)
+  * [S3 config](#s3-config)
   * [RabbitMq config](#rabbitmq-config)
 * [Testing config](#testing-config)
 * [Local config](#local-config)
@@ -66,7 +66,7 @@ their overriding and usage in mixed mode was not tested. Usage of spring profile
 | name                     | value                 | required | description                                                                                                               | sensitive? | source                              |
 |--------------------------|-----------------------|----------|---------------------------------------------------------------------------------------------------------------------------|------------|-------------------------------------|
 | `SPRING_PROFILES_ACTIVE` | ex `anthos`           | YES      | Spring profile that activate default configuration for Google Cloud environment                                           | no         | -                                   |
-| `OBMDRIVER`              | `minio`               |          | Obm driver mode that defines which object storage will be used                                                            | no         | -                                   |
+| `OBMDRIVER`              | `s3`                  |          | Obm driver mode that defines which object storage will be used                                                            | no         | -                                   |
 | `OQMDRIVER`              | `rabbitmq`            |          | Oqm driver mode that defines which message broker will be used                                                            | no         | -                                   |
 | `OSMDRIVER`              | `postgres`            |          | Osm driver mode that defines which KV storage will be used                                                                | no         | -                                   |
 | `PARTITION_AUTH_ENABLED` | `true` or `false`     |          | Disable or enable auth token provisioning for requests to Partition service                                               | no         | -                                   |
@@ -92,11 +92,11 @@ It can be overridden by:
 - through the Spring Boot property `osm.postgres.partition-properties-prefix`
 - environment variable `OSM_POSTGRES_PARTITION_PROPERTIES_PREFIX`
 
-**prefix:** `obm.minio`
+**prefix:** `obm.s3`
 It can be overridden by:
 
 - through the Spring Boot property `osm.postgres.partition-properties-prefix`
-- environment variable `OBM_MINIO_PARTITION_PROPERTIES_PREFIX`
+- environment variable `OBM_S3_PARTITION_PROPERTIES_PREFIX`
 
 **prefix:** `oqm.rabbitmq`
 It can be overridden by:
@@ -127,31 +127,30 @@ Example:
     }
 ```
 
-| name                               | description                                                                                                                           |
-|------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `osm.postgres.datasource.url`      | Postgres url                                                                                                                          |
-| `osm.postgres.datasource.username` | Postgres username                                                                                                                     |
-| `osm.postgres.datasource.password` | Postgres password                                                                                                                     |
-| `oqm.rabbitmq.amqp.password`       | Amqp username                                                                                                                         |
-| `oqm.rabbitmq.amqp.password`       | Amqp password                                                                                                                         |
-| `oqm.rabbitmq.admin.username`      | Amqp admin username                                                                                                                   |
-| `oqm.rabbitmq.admin.password`      | Amqp admin password                                                                                                                   |
-| `obm.minio.endpoint`               | server URL                                                                                                                            |
-| `obm.minio.accessKey`              | credentials access key                                                                                                                |
-| `obm.minio.secretKey`              | credentials secret key                                                                                                                |
-| `obm.minio.ignoreCertCheck`        | optional, default value is 'false'. When set to 'true' disables certificate check for MinIO client                                    |
-| `obm.minio.external.endpoint`      | optional, used when service should use internal endpoint(in cluster) but must provide credentials for end users for external endpoint |
-| `oqm.rabbitmq.amqp.host`           | messaging hostname or IP                                                                                                              |
-| `oqm.rabbitmq.amqp.port`           | - port                                                                                                                                |
-| `oqm.rabbitmq.amqp.path`           | - path                                                                                                                                |
-| `oqm.rabbitmq.amqp.username`       | - username                                                                                                                            |
-| `oqm.rabbitmq.amqp.password`       | - password                                                                                                                            |
-| `oqm.rabbitmq.admin.schema`        | admin host schema                                                                                                                     |
-| `oqm.rabbitmq.admin.host`          | - host name                                                                                                                           |
-| `oqm.rabbitmq.admin.port`          | - port                                                                                                                                |
-| `oqm.rabbitmq.admin.path`          | - path                                                                                                                                |
-| `oqm.rabbitmq.admin.username`      | - username                                                                                                                            |
-| `oqm.rabbitmq.admin.password`      | - password                                                                                                                            |
+| name                               | description              |
+|------------------------------------|--------------------------|
+| `osm.postgres.datasource.url`      | Postgres url             |
+| `osm.postgres.datasource.username` | Postgres username        |
+| `osm.postgres.datasource.password` | Postgres password        |
+| `oqm.rabbitmq.amqp.password`       | Amqp username            |
+| `oqm.rabbitmq.amqp.password`       | Amqp password            |
+| `oqm.rabbitmq.admin.username`      | Amqp admin username      |
+| `oqm.rabbitmq.admin.password`      | Amqp admin password      |
+| `obm.s3.endpoint`                  | server URL               |
+| `obm.s3.accessKey`                 | server accessKey         |
+| `obm.s3.secretKey`                 | server secretKey         |
+| `obm.s3.region`                    | server region            |
+| `oqm.rabbitmq.amqp.host`           | messaging hostname or IP |
+| `oqm.rabbitmq.amqp.port`           | - port                   |
+| `oqm.rabbitmq.amqp.path`           | - path                   |
+| `oqm.rabbitmq.amqp.username`       | - username               |
+| `oqm.rabbitmq.amqp.password`       | - password               |
+| `oqm.rabbitmq.admin.schema`        | admin host schema        |
+| `oqm.rabbitmq.admin.host`          | - host name              |
+| `oqm.rabbitmq.admin.port`          | - port                   |
+| `oqm.rabbitmq.admin.path`          | - path                   |
+| `oqm.rabbitmq.admin.username`      | - username               |
+| `oqm.rabbitmq.admin.password`      | - password               |
 
 ### Partition level secret ENV variables
 | name                                          | value                        | description                         |
@@ -159,8 +158,8 @@ Example:
 | `<POSTGRES_URL_ENV_VARIABLE_NAME>`            | ex `POSTGRES_URL`            | Postgres url sensitive value        |
 | `<POSTGRES_USERNAME_ENV_VARIABLE_NAME>`       | ex `POSTGRES_USERNAME`       | Postgres username sensitive value   |
 | `<POSTGRES_PASSWORD_ENV_VARIABLE_NAME>`       | ex `POSTGRES_PASSWORD`       | Postgres password sensitive value   |
-| `<MINIO_ACCESSKEY_ENV_VARIABLE_NAME>`         | ex `MINIO_ACCESS_KEY`        | Minio access key sensitive value    |
-| `<MINIO_SECRETKEY_ENV_VARIABLE_NAME>`         | ex `MINIO_SECRET_KEY`        | Minio secret sensitive value        |
+| `<SEAWEEDFS_ACCESS_KEY_ENV_VARIABLE_NAME>`    | ex `SEAWEEDFS_ACCESS_KEY`    | S3 secret sensitive value           |
+| `<SEAWEEDFS_SECRET_KEY_ENV_VARIABLE_NAME>`    | ex `SEAWEEDFS_SECRET_KEY`    | S3 secret sensitive value           |
 | `<RABBITMQ_USERNAME_ENV_VARIABLE_NAME>`       | ex `RABBITMQ_USERNAME`       | Amqp username sensitive value       |
 | `<RABBITMQ_PASSWORD_ENV_VARIABLE_NAME>`       | ex `RABBITMQ_PASSWORD`       | Amqp password sensitive value       |
 | `<RABBITMQ_ADMIN_USERNAME_ENV_VARIABLE_NAME>` | ex `RABBITMQ_ADMIN_USERNAME` | Amqp admin username sensitive value |
@@ -221,7 +220,7 @@ CREATE TABLE osdu."file_locations_osm"(
 CREATE INDEX file_locations_osm_datagin ON osdu."file_locations_osm" USING GIN (data);
 ```
 
-### Minio config
+### S3 config
 
 These buckets must be defined in tenants’ dedicated object store servers. OBM connection properties of these servers (url, etc.) are defined as specific properties in tenants’ PartitionInfo registration objects at the Partition service as described in accordant sections of this document.
 
@@ -323,17 +322,17 @@ curl -L -X PATCH 'http://partition.com/api/partition/v1/partitions/opendes' -H '
 ```
 curl -L -X PATCH 'https:///api/partition/v1/partitions/opendes' -H 'data-partition-id: opendes' -H 'Authorization: Bearer ...' -H 'Content-Type: application/json' --data-raw '{
   "properties": {
-    "obm.minio.endpoint": {
+    "obm.s3.endpoint": {
       "sensitive": false,
-      "value": "http://localhost:9000"
+      "value": "${DATA_PARTITION_ID_VALUE}-SEAWEEDFS_ENDPOINT"
     },
-    "obm.minio.accessKey": {
-      "sensitive": false,
-      "value": "minioadmin"
-    },
-    "obm.minio.secretKey": {
+    "obm.s3.accessKey": {
       "sensitive": true,
-      "value": "NAME_ENV_VARIABLE_WHICH_WILL_BE_IN_SERVICE_ENV"
+      "value": "${DATA_PARTITION_ID_VALUE}-SEAWEEDFS_ACCESS_KEY"
+    },
+    "obm.s3.secretKey": {
+      "sensitive": true,
+      "value": "${DATA_PARTITION_ID_VALUE}-SEAWEEDFS_SECRET_KEY"
     }
   }
 }'

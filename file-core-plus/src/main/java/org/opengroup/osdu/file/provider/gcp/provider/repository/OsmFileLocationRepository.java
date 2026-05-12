@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.model.file.FileListRequest;
 import org.opengroup.osdu.core.common.model.file.FileListResponse;
 import org.opengroup.osdu.core.common.model.file.FileLocation;
@@ -63,10 +64,12 @@ public class OsmFileLocationRepository implements IFileLocationRepository {
   private final CorePlusConfigurationProperties configurationProperties;
   private final TenantInfo tenantInfo;
   private final Random random = new Random();
+  private final JaxRsDpsLog log;
 
   @Override
   public FileLocation findByFileID(String fileID) {
     if (Objects.isNull(fileID)) {
+      log.debug("Skipping file location lookup because fileID is null");
       return null;
     }
     GetQuery<FileLocationOsm> fileLocationGetQuery =
@@ -74,7 +77,10 @@ public class OsmFileLocationRepository implements IFileLocationRepository {
             eq(FILE_ID, fileID));
     List<FileLocationOsm> resultsAsList = osmDatabaseContext.getResultsAsList(fileLocationGetQuery);
     Optional<FileLocationOsm> locationOsm = resultsAsList.stream().findFirst();
-    return locationOsm.map(FileLocationOsm::toFileLocation).orElse(null);
+    FileLocation result = locationOsm.map(FileLocationOsm::toFileLocation).orElse(null);
+    log.debug("Completed file location lookup: fileID=" + fileID + ", matches="
+        + resultsAsList.size() + ", found=" + (result != null));
+    return result;
   }
 
   @Override
@@ -82,7 +88,10 @@ public class OsmFileLocationRepository implements IFileLocationRepository {
     this.random.setSeed(fileLocation.hashCode());
     long aLong = random.nextLong();
     FileLocationOsm fileLocationOsm = new FileLocationOsm(fileLocation, aLong);
-    return osmDatabaseContext.createAndGet(getDestination(), fileLocationOsm).toFileLocation();
+    FileLocation saved = osmDatabaseContext.createAndGet(getDestination(), fileLocationOsm).toFileLocation();
+    log.debug("Saved file location in OSM: fileID=" + saved.getFileID() + ", driver="
+        + saved.getDriver() + ", createdBy=" + saved.getCreatedBy());
+    return saved;
   }
 
   //  TODO refactor after pagination implemented in osm

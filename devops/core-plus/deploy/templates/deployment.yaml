@@ -32,7 +32,7 @@ spec:
           - secretRef:
               name: {{ .Values.conf.rabbitmqSecretName | quote }}
           - secretRef:
-              name: {{ .Values.conf.fileMinioSecretName | quote }}
+              name: {{ printf "%s-%s" .Values.global.dataPartitionId .Values.conf.s3SecretName | quote }}
           - secretRef:
               name: {{ .Values.conf.fileKeycloakSecretName | quote }}
           - secretRef:
@@ -51,7 +51,7 @@ spec:
             periodSeconds: 20
           readinessProbe:
             failureThreshold: 2
-            httpGet: 
+            httpGet:
               path: /health/readiness
               port: 8081
             periodSeconds: 15

@@ -17,8 +17,6 @@
 
 package org.opengroup.osdu.file.provider.gcp.provider.repository;
 
-import static java.lang.String.format;
-
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
@@ -33,6 +31,7 @@ import org.opengroup.osdu.core.obm.core.model.ObmSignedUrlParams;
 import org.opengroup.osdu.core.obm.core.persistence.ObmDestination;
 import org.opengroup.osdu.file.model.SignedObject;
 import org.opengroup.osdu.file.model.SignedUrlParameters;
+import org.opengroup.osdu.file.provider.gcp.provider.util.ObmStorageUrlBuilder;
 import org.opengroup.osdu.file.provider.interfaces.IStorageRepository;
 import org.opengroup.osdu.file.util.ExpiryTimeUtil;
 import org.springframework.stereotype.Component;
@@ -70,7 +69,6 @@ public class ObmStorageRepository implements IStorageRepository {
   private SignedObject prepareSignedObject(
       String bucketName, String filepath, ObmHttpMethod httpMethod,
       SignedUrlParameters signedUrlParameters) {
-    log.debug("Creating the signed blob in bucket {} for path {}", bucketName, filepath);
     String partitionId = dpsHeaders.getPartitionId();
 
     ExpiryTimeUtil.RelativeTimeValue expiryTimeInTimeUnit = expiryTimeUtil
@@ -101,23 +99,26 @@ public class ObmStorageRepository implements IStorageRepository {
 
     ObmSignedUrlParams obmSignedUrlParams = obmSignedUrlParamsBuilder.build();
 
-    URL signedUrl = obmDriver.getSignedUrlWithParams(obmSignedUrlParams);
+    log.debug("Requesting OBM signed URL: method={}, bucket={}, key={}, partition={}, expiry={} {}, contentDisposition={}, contentType={}",
+        obmSignedUrlParams.getMethod(), obmSignedUrlParams.getBucket(), obmSignedUrlParams.getFileName(),
+        partitionId, obmSignedUrlParams.getExpiryDuration(), obmSignedUrlParams.getExpiryTimeUnit(),
+        Objects.nonNull(fileName) && !fileName.isEmpty(), Objects.nonNull(contentType) && !contentType.isEmpty());
 
-    log.debug("Signed URL for created storage object. BucketName: {}, FilePath: {}, Signed URL: {}",
-        bucketName, filepath, signedUrl);
+    URL signedUrl = obmDriver.getSignedUrlWithParams(obmSignedUrlParams);
+    URI objectUri = getObjectUri(bucketName, filepath, partitionId);
+
+    log.debug("Created OBM signed object: method={}, bucket={}, key={}, uri={}",
+        httpMethod, bucketName, filepath, objectUri);
 
     return SignedObject.builder()
         .url(signedUrl)
-        .uri(getObjectUri(bucketName, filepath, partitionId))
+        .uri(objectUri)
         .build();
   }
 
   private URI getObjectUri(String bucketName, String filePath, String partitionId) {
-    String transferProtocol = environmentResolver.getTransferProtocol(partitionId);
-    if (!transferProtocol.endsWith("/")) {
-      transferProtocol = transferProtocol + "/";
-    }
-    return URI.create(format("%s%s/%s", transferProtocol, bucketName, filePath));
+    return URI.create(ObmStorageUrlBuilder
+        .buildUnsignedUrl(environmentResolver.getTransferProtocol(partitionId), bucketName, filePath));
   }
 
   /**
