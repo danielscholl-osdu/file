@@ -2,10 +2,6 @@ variables:
   GC_SERVICE: file
   GC_VENDOR: gc
 
-gc-dev2-test:
-  variables:
-    DOMAIN: $GROUP_ID
-
 download_gc_plugins:
   image: maven:3.8.3-openjdk-17-slim
   stage: build
