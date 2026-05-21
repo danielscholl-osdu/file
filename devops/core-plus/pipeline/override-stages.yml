@@ -7,3 +7,9 @@ variables:
 cimpl-acceptance-test:
   variables:
     SIGNED_URL_EXPIRY_TIME_MINUTES: "15"
+
+#standby (Blue-Green) jobs
+
+cimpl-standby-acceptance-test:
+  variables:
+    SIGNED_URL_EXPIRY_TIME_MINUTES: "15"
