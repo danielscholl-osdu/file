@@ -33,7 +33,7 @@ echo "Setting up upstream repository: $UPSTREAM_REPO"
 
 # Convert to URL format
 if [[ "$UPSTREAM_REPO" == http* ]]; then
-  REPO_URL="$UPSTREAM_REPO"
+  REPO_URL="${UPSTREAM_REPO%/}"
   if [[ ! "$REPO_URL" == *.git ]]; then
     REPO_URL="${REPO_URL}.git"
   fi
