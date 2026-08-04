@@ -18,6 +18,7 @@
 	</parent>
 
 	<artifactId>file-test-gcp</artifactId>
+	<version>0.30.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 

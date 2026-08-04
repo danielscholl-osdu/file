@@ -9,6 +9,7 @@
 	</parent>
 
   <artifactId>file-test-ibm</artifactId>
+  <version>0.30.0-SNAPSHOT</version>
 
   <properties>
     <junit-jupiter.version>5.5.2</junit-jupiter.version>

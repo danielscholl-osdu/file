@@ -19,6 +19,7 @@
 	</parent>
 
 	<artifactId>file-ibm</artifactId>
+	<version>0.30.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>file-ibm</name>
