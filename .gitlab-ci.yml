@@ -11,8 +11,8 @@ variables:
   AZURE_SWAGGER_PATH: api/file/v2/swagger-ui/index.html
 
   #CIMPL
-  CIMPL_OPENAPI_SPEC_PATH: docs/api/community/v2/openapi.yaml
-  CIMPL_OPENAPI_YAML_ROUTE: /api/file/v2/api-docs.yaml
+  CIMPL_OPENAPI_CONFIG_ROUTE: /api/file/v2/api-docs/swagger-config
+  SCHEMATHESIS_OPENAPI_YAML_ROUTE: /api/file/v2/api-docs.yaml
 
   ACCEPTANCE_TEST_DIR: "file-acceptance-test"
 
