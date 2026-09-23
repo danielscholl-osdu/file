@@ -48,7 +48,7 @@
     <checker-compat-qual.version>2.5.5</checker-compat-qual.version>
 
     <!-- Test Dependencies -->
-    <byte-buddy.version>1.17.5</byte-buddy.version>
+    <byte-buddy.version>1.17.8</byte-buddy.version>
 
     <!-- Plugin Dependencies -->
     <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
