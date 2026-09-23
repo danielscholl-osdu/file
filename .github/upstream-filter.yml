@@ -1,0 +1,96 @@
+# Per-service upstream filter config (ADR-038), planted at fork initialization
+# with file substituted from the upstream repository name.
+# Every upstream top-level entry, testing/ entry, root pom profile, and
+# .fossa.yml module must appear here: the engine halts rather than guess.
+# Entries absent from a given upstream tree are inert, so this file carries the
+# superset of the conventional OSDU service shape. A service that deviates
+# maintains its own copy of this file on the fork's main branch.
+service: file
+
+top_level:
+  .config: keep
+  .dockerignore: keep
+  .editorconfig: keep
+  .envrc.template: keep
+  .fossa.yml: keep
+  .gitattributes: keep
+  .gitignore: keep
+  .gitlab: strip
+  .gitlab-ci.yml: strip
+  .mvn: keep
+  .sonarlint: keep
+  .trufflehog-exclude: strip
+  LICENSE: keep
+  NOTICE: keep
+  README.md: keep
+  img: keep
+  maven: keep
+  docs: keep
+  pom.xml: keep
+  publish.yml: strip
+  file-acceptance-test: keep
+  file-core: keep
+  file-core-plus: strip
+
+testing:
+  INTEGRATION-TESTS.md: keep
+  README.md: keep
+  maven: keep
+  pom.xml: keep
+  file-test-core: keep
+  file-test-core-bdd: keep
+  file-test-azure: fork
+  file-test-aws: strip
+  file-test-baremetal: strip
+  file-test-core-plus: strip
+  file-test-gc: strip
+  file-test-gcp: strip
+  file-test-ibm: strip
+  file-test-jdbc: strip
+
+profiles:
+  Default: keep
+  core: keep
+  azure: inject
+  aws: strip
+  gc: strip
+  gcp: strip
+  ibm: strip
+
+fossa_modules:
+  file: keep
+  file-service: keep
+  file-core: keep
+  file-core-plus: strip
+  file-azure: strip
+  file-aws: strip
+  file-gc: strip
+  file-gcp: strip
+  file-ibm: strip
+  file-jdbc: strip
+  file-gcp-datastore: strip
+
+expected_kept:
+  - pom.xml
+  - file-core
+  - testing/file-test-core
+
+expected_absent:
+  - provider
+  - devops
+  - file-core-plus
+  - .gitlab-ci.yml
+  - testing/file-test-azure
+  - testing/file-test-aws
+  - testing/file-test-core-plus
+
+inject_root_pom_azure_profile: |
+      <profile>
+        <id>azure</id>
+        <modules>
+          <module>provider/file-azure</module>
+        </modules>
+      </profile>
+
+inject_testing_pom_azure_module: |
+      <module>file-test-azure</module>
