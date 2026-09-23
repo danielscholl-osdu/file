@@ -59,10 +59,7 @@
 
   <modules>
     <module>file-test-core</module>
-    <module>file-test-gc</module>
     <module>file-test-azure</module>
-    <module>file-test-ibm</module>
-    <module>file-test-baremetal</module>
   </modules>
 
   <dependencyManagement>

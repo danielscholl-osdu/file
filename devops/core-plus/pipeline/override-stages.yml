@@ -1,6 +1,0 @@
-variables:
-  CIMPL_SERVICE: "file"
-  CIMPL_BUILD_PATH: "file-core-plus/cloudbuild/Dockerfile"
-  CIMPL_HELM_TIMEOUT: "--timeout 15m"
-  CIMPL_TEST_SUBDIR: testing/file-test-core
-  DISABLE_INTEGRATION_TEST: true

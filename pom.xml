@@ -638,25 +638,12 @@
       </activation>
       <modules>
         <module>file-core</module>
-        <module>file-core-plus</module>
       </modules>
     </profile>
     <profile>
       <id>azure</id>
       <modules>
         <module>provider/file-azure</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>ibm</id>
-      <modules>
-        <module>provider/file-ibm</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>gc</id>
-      <modules>
-        <module>provider/file-gc</module>
       </modules>
     </profile>
   </profiles>
