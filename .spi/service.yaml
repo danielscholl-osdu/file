@@ -15,3 +15,20 @@ tests:
       ENTITLEMENTS_DOMAIN: { source: domain }
       LEGAL_TAG: { source: legalTag }
       PRIVILEGED_USER_TOKEN: { source: token }
+  integration:
+    type: maven
+    path: testing
+    mavenArguments: [-pl, file-test-azure, -am, "-Dtest=!TestFileCollection,!TestFile#testFileDmsApis+*Anonimus", -Dsurefire.failIfNoSpecifiedTests=false, test]
+    timeoutMinutes: 20
+    bindings:
+      FILE_SERVICE_HOST: { source: gateway, suffix: /api/file/v2 }
+      LEGAL_HOST: { source: gateway, suffix: /api/legal/v1/ }
+      STORAGE_HOST: { source: gateway, suffix: /api/storage/v2/ }
+      DATA_PARTITION_ID: { source: partition }
+      TENANT_NAME: { source: partition }
+      DOMAIN: { source: domain }
+      DEPLOY_ENV: { source: static, value: empty }
+      TIME_ZONE: { source: static, value: UTC }
+      USER_ID: { source: static, value: osdu-user }
+      INTEGRATION_TESTER_ACCESS_TOKEN: { source: token }
+      NO_DATA_ACCESS_TESTER_ACCESS_TOKEN: { source: noAccessToken }
