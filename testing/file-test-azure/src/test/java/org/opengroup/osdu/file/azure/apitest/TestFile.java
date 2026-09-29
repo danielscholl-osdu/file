@@ -352,6 +352,9 @@ public class TestFile extends File {
 
   @AfterAll
   public static void tearDown() throws Exception {
+    if (StringUtils.isBlank(storageAccountName) || StringUtils.isBlank(containerName)) {
+      return;
+    }
     if (!locationResponses.isEmpty()) {
       for (LocationResponse response : locationResponses) {
         ClientResponse getFileLocationResponse = client.send(
