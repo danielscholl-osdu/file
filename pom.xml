@@ -653,12 +653,6 @@
         <module>provider/file-ibm</module>
       </modules>
     </profile>
-    <profile>
-      <id>gc</id>
-      <modules>
-        <module>provider/file-gc</module>
-      </modules>
-    </profile>
   </profiles>
 
   <repositories>

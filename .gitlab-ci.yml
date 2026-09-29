@@ -36,9 +36,6 @@ include:
     file: "publishing/common-pages.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/gc-global.yml"
-
-  - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/cimpl-global.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
@@ -50,12 +47,7 @@ include:
     file: "cloud-providers/azure-one-pipeline.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/gc-one-pipeline.yml"
-
-  - project: "osdu/platform/ci-cd-pipelines"
     file: "reporting/schemathesis.yml"
-
-  - local: "devops/gc/pipeline/override-stages.yml"
 
 download_plugins:
   image: maven:3.8.3-openjdk-17-slim
@@ -95,4 +87,3 @@ fossa-analyze:
   image: $CI_REGISTRY/divido/fossa-with-cache:v0.9-jdk17
 fossa-check-notice:
   image: $CI_REGISTRY/divido/fossa-with-cache:v0.9-jdk17
-
